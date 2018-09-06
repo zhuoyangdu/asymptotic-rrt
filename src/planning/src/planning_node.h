@@ -2,8 +2,11 @@
 // Created by zy on 18-9-5.
 //
 
-#ifndef PLANNING_NODE_PLANNING_NODE_H
-#define PLANNING_NODE_PLANNING_NODE_H
+#ifndef PLANNING_PLANNING_NODE_H
+#define PLANNING_PLANNING_NODE_H
+
+#include <iostream>
+#include <fcntl.h>
 
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -13,6 +16,11 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
+
+#include "planning_conf.pb.h"
+
+#include <google/protobuf/text_format.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 namespace planning {
 class PlanningNode {
@@ -29,11 +37,13 @@ class PlanningNode {
     void CallbackMap(const sensor_msgs::Image& msg);
     void CallbackVehicleState(const geometry_msgs::PoseStamped& msg);
 
-    int rate_ = 10;
+    planning::PlanningConf planning_conf_;
+
+    uint32_t rate_ = 10;
     ros::NodeHandle nh_;
     ros::Subscriber sub_map_;
     ros::Subscriber sub_vehicle_state_;
-    ros::Publisher pub_trajectory_;
+    ros::Publisher  pub_trajectory_;
 
     sensor_msgs::Image map_;
     geometry_msgs::PoseStamped vehicle_state_;
@@ -42,4 +52,4 @@ class PlanningNode {
 };
 }
 
-#endif //PLANNING_NODE_PLANNING_NODE_H
+#endif //PLANNING_PLANNING_NODE_H

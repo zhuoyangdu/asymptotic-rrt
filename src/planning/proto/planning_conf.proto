@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package planning;
+
+message RRTConf {
+    optional double time_step = 1;
+}
+
+message PlanningConf {
+    optional bool use_sim_time = 1;
+    optional RRTConf rrt_conf = 2;
+}

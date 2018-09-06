@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     geometry_msgs
     sensor_msgs
+    roslib
 )
 
 include(FindProtobuf)
@@ -20,16 +21,26 @@ add_library(planning_proto ${PROTO_HDRS} ${PROTO_SRCS})
 
 catkin_package(
     LIBRARIES planning
-    CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs sensor_msgs
+    CATKIN_DEPENDS roscpp rospy roslib std_msgs geometry_msgs sensor_msgs
 )
 
 include_directories(
     ${catkin_INCLUDE_DIRS}
-    ${PROTOBUF_LIBRARY}
 )
 
 add_library(planning
-        src/planning_node.cpp)
+        src/planning_node.cpp
+        src/planning_node.h
+        src/rrt/heuristic_rrt.cpp
+        src/rrt/heuristic_rrt.h
+        src/rrt/tree.cpp
+        src/rrt/tree.h
+        src/rrt/node.h
+)
+
+target_link_libraries(planning
+        ${catkin_LIBRARIES}
+)
 
 add_executable(planning_node
         src/main.cpp)
@@ -37,4 +48,5 @@ add_executable(planning_node
 target_link_libraries(planning_node
         ${catkin_LIBRARIES}
         planning
-        planning_proto)
+        planning_proto
+        ${PROTOBUF_LIBRARY})
