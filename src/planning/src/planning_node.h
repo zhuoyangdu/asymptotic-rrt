@@ -10,6 +10,7 @@
 
 #include <ros/ros.h>
 #include <ros/package.h>
+#include <tf/transform_datatypes.h>
 
 #include <sensor_msgs/Image.h>
 #include <geometry_msgs/Pose2D.h>
@@ -22,10 +23,12 @@
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
+#include "rrt/heuristic_rrt.h"
+
 namespace planning {
 class PlanningNode {
  public:
-    PlanningNode(const ros::NodeHandle& nh);
+    explicit PlanningNode(const ros::NodeHandle& nh);
 
     void Run();
 
@@ -34,10 +37,13 @@ class PlanningNode {
 
     void InitROS();
 
+    void RegisterPlanner();
+
     void CallbackMap(const sensor_msgs::Image& msg);
     void CallbackVehicleState(const geometry_msgs::PoseStamped& msg);
 
     planning::PlanningConf planning_conf_;
+    std::unique_ptr<HeuristicRRT> rrt_planner_;
 
     uint32_t rate_ = 10;
     ros::NodeHandle nh_;
@@ -46,7 +52,7 @@ class PlanningNode {
     ros::Publisher  pub_trajectory_;
 
     sensor_msgs::Image map_;
-    geometry_msgs::PoseStamped vehicle_state_;
+    geometry_msgs::Pose2D vehicle_state_;
     bool map_ready_ = false;
     bool vehicle_state_ready_ = false;
 };

@@ -16,12 +16,26 @@ enum ErrorCode {
 
 class PlanningStatus {
  public:
-    PlanningStatus(ErrorCode code = ErrorCode::OK) : code_(code) {
 
+    explicit PlanningStatus(ErrorCode code = ErrorCode::OK)
+        : code_(code), msg_("") {
     }
 
-    bool ok() const {
-        return code_ == ErrorCode::OK;
+    PlanningStatus(ErrorCode code, const std::string& msg)
+        : code_(code), msg_(msg) {
+    }
+
+    static PlanningStatus OK() {return PlanningStatus(); }
+
+    ErrorCode code() const {return code_; }
+
+    bool ok() const { return code_ == ErrorCode::OK; }
+
+    std::string ToString() const {
+        if (code_ == ErrorCode::OK) {
+            return "OK";
+        }
+        return "ERROR: " + msg_;
     }
 
  private:

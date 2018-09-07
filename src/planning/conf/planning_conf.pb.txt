@@ -1,2 +1,4 @@
 use_sim_time : true
-time_step : 0.1
+rrt_conf {
+    time_step : 0.1
+}

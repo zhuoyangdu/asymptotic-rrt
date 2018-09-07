@@ -9,6 +9,7 @@ PlanningNode::PlanningNode(const ros::NodeHandle &nh)
     : nh_(nh) {
    ParamConfig();
    InitROS();
+   RegisterPlanner();
 }
 
 void PlanningNode::ParamConfig() {
@@ -57,23 +58,33 @@ void PlanningNode::Run() {
     ros::Rate loop_rate(rate_);
     while (ros::ok()) {
         ros::spinOnce();
-        /*
-         * Do something
-         */
+        if (vehicle_state_ready_ && map_ready_) {
+            auto status = rrt_planner_->Solve(vehicle_state_, map_);
+            if (status.ok()) {
+                ROS_INFO("Solve success.");
+            }
+        }
         loop_rate.sleep();
     }
 }
 
+void PlanningNode::RegisterPlanner() {
+    rrt_planner_.reset(new HeuristicRRT(planning_conf_.rrt_conf()));
+}
+
 void PlanningNode::CallbackMap(const sensor_msgs::Image &msg) {
     map_ = msg;
-    ROS_INFO("callback map");
+    // ROS_INFO("callback map");
     map_ready_ = true;
 }
 
 void PlanningNode::CallbackVehicleState(const geometry_msgs::PoseStamped &msg) {
-    vehicle_state_ = msg;
+    vehicle_state_.x = msg.pose.position.x;
+    vehicle_state_.y = msg.pose.position.y;
+    vehicle_state_.theta = tf::getYaw(msg.pose.orientation);
     vehicle_state_ready_ = true;
-    ROS_INFO("callback vehicle state.");
+
+    // ROS_INFO("callback vehicle state.");
 }
 
 }
