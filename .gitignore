@@ -2,3 +2,5 @@ cmake-build-debug
 .idea
 planning/cmake-build-debug
 .catkin_tools
+build
+devel

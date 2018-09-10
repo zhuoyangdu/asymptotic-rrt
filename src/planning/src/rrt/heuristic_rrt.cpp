@@ -14,13 +14,14 @@ HeuristicRRT::HeuristicRRT(const RRTConf& rrt_conf)
 PlanningStatus HeuristicRRT::Solve(
     const geometry_msgs::Pose2D& vehicle_state,
     const sensor_msgs::Image& map) {
+
     return PlanningStatus::OK();
 }
 
 PlanningStatus HeuristicRRT::GetGridMap(
-    const sensor_msgs::Image& map) {
-    grid_map::GridMap grid_map({"elevation", "normal_x", "normal_y", "normal_z"});
-    grid_map.setFrameId("")
+    const sensor_msgs::Image& image) {
+
+    return PlanningStatus::OK();
 }
 
 }

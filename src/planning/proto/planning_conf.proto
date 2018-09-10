@@ -6,7 +6,12 @@ message RRTConf {
     optional double time_step = 1;
 }
 
+message VrepConf {
+    optional int32 resolution = 512;
+}
+
 message PlanningConf {
     optional bool use_sim_time = 1;
     optional RRTConf rrt_conf = 2;
+    optional VrepConf vrep_conf = 3;
 }

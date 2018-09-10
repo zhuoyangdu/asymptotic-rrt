@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
     geometry_msgs
     sensor_msgs
     roslib
+    cv_bridge
 )
 
 include(FindProtobuf)
@@ -19,13 +20,16 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS proto/planning_conf.proto)
 add_library(planning_proto ${PROTO_HDRS} ${PROTO_SRCS})
 
+find_package(OpenCV REQUIRED)
+
 catkin_package(
     LIBRARIES planning
-    CATKIN_DEPENDS roscpp rospy roslib std_msgs geometry_msgs sensor_msgs
+    CATKIN_DEPENDS roscpp rospy roslib std_msgs geometry_msgs sensor_msgs cv_bridge
 )
 
 include_directories(
     ${catkin_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
 )
 
 add_library(planning
@@ -36,6 +40,7 @@ add_library(planning
         src/rrt/tree.cpp
         src/rrt/tree.h
         src/rrt/node.h
+        src/common/image_proc.cpp
 )
 
 target_link_libraries(planning
@@ -47,6 +52,17 @@ add_executable(planning_node
 
 target_link_libraries(planning_node
         ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES}
+        planning
+        planning_proto
+        ${PROTOBUF_LIBRARY})
+
+add_executable(test_image_proc
+        src/test/test_image_proc.cpp)
+
+target_link_libraries(test_image_proc
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES}
         planning
         planning_proto
         ${PROTOBUF_LIBRARY})

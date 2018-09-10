@@ -24,6 +24,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include "rrt/heuristic_rrt.h"
+#include "common/environment.h"
 
 namespace planning {
 class PlanningNode {

@@ -22,6 +22,7 @@
 #include "planning_conf.pb.h"
 
 #include "../common/planning_status.h"
+#include "../common/environment.h"
 
 namespace planning {
 
@@ -36,7 +37,7 @@ class HeuristicRRT {
 
  private:
     PlanningStatus GetGridMap(
-        const sensor_msgs::Image& map);
+        const sensor_msgs::Image& image);
 
     void UniformSample();
 

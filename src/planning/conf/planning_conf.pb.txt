@@ -2,3 +2,6 @@ use_sim_time : true
 rrt_conf {
     time_step : 0.1
 }
+vrep_conf {
+    resolution : 512
+}

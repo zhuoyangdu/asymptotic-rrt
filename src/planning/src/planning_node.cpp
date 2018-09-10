@@ -59,10 +59,12 @@ void PlanningNode::Run() {
     while (ros::ok()) {
         ros::spinOnce();
         if (vehicle_state_ready_ && map_ready_) {
+            Environment env(map_, planning_conf_.vrep_conf().resolution());
             auto status = rrt_planner_->Solve(vehicle_state_, map_);
             if (status.ok()) {
                 ROS_INFO("Solve success.");
             }
+            ros::spin();
         }
         loop_rate.sleep();
     }
