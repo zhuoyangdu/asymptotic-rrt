@@ -30,17 +30,19 @@ class ImageProc {
                                      cv_bridge::CvImagePtr cv_image,
                                      const std::string& opencv_win);
 
-    static void GetContours(const cv::Mat& image);
-
     static std::vector<Point> GetVertex(const cv::Mat& image);
 
-    static void GetVoronoi(const cv::Mat& image);
+    static cv::Mat_<double> GetVoronoiProbMap(const cv::Mat& image);
+
+    static cv::Mat_<double> GetTargetAttractiveMap(
+        const cv::Mat& image, const cv::Point& goal);
+
+    static cv::Mat_<double> GetAttractiveProbMap(
+        const cv::Mat& image, const cv::Point& goal,
+        double k_voronoi, double k_goal);
 
  private:
 
-    static void draw_point(const Mat& img, Point2f fp, Scalar color );
-    static void draw_delaunay(const Mat& img, Subdiv2D& subdiv, Scalar delaunay_color );
-    static void draw_voronoi(const Mat& img, Subdiv2D& subdiv );
 
 };
 }
