@@ -4,14 +4,27 @@ package planning;
 
 message RRTConf {
     optional double time_step = 1;
+    optional double k_voronoi = 2;
+    optional double k_goal = 3;
 }
 
 message VrepConf {
-    optional int32 resolution = 512;
+    optional int32 resolutionX = 1;
+    optional int32 resolutionY = 2;
+    optional double minX = 3;
+    optional double maxX = 4;
+    optional double minY = 5;
+    optional double maxY = 6;
+}
+
+message Goal {
+    optional double x = 1;
+    optional double y = 2;
 }
 
 message PlanningConf {
     optional bool use_sim_time = 1;
     optional RRTConf rrt_conf = 2;
     optional VrepConf vrep_conf = 3;
+    optional Goal goal = 4;
 }

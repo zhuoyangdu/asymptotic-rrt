@@ -9,17 +9,20 @@ using namespace cv;
 
 namespace planning {
 
+void ImageProc::PlotPoint(const cv::Mat& image,
+                          const Point& point,
+                          const cv::Scalar& scalar) {
+    circle(image, point, 3, scalar, CV_FILLED, CV_AA, 0);
+}
 void ImageProc::FromROSImageToOpenCV(const sensor_msgs::Image &image,
-                                     cv_bridge::CvImagePtr cv_image,
-                                     const std::string &opencv_win) {
+                                     cv_bridge::CvImagePtr cv_image) {
     try {
         cv_image = cv_bridge::toCvCopy(
-            image, sensor_msgs::image_encodings::MONO16);
+            image, sensor_msgs::image_encodings::MONO8);
     } catch (cv_bridge::Exception &e) {
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-    cv::imshow(opencv_win, cv_image->image);
 }
 
 std::vector<Point> ImageProc::GetVertex(const cv::Mat &image) {

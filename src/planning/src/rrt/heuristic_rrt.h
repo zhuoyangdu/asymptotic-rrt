@@ -33,7 +33,7 @@ class HeuristicRRT {
     explicit HeuristicRRT(const RRTConf& rrt_conf);
 
     PlanningStatus Solve(const geometry_msgs::Pose2D& vehicle_state,
-                          const sensor_msgs::Image& map);
+                         Environment* environment);
 
  private:
     PlanningStatus GetGridMap(

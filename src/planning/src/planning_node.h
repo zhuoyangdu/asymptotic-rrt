@@ -38,9 +38,12 @@ class PlanningNode {
 
     void InitROS();
 
+    void InitEnv();
+
     void RegisterPlanner();
 
     void CallbackMap(const sensor_msgs::Image& msg);
+    void CallbackMapStatic(const sensor_msgs::Image& msg);
     void CallbackVehicleState(const geometry_msgs::PoseStamped& msg);
 
     planning::PlanningConf planning_conf_;
@@ -49,13 +52,18 @@ class PlanningNode {
     uint32_t rate_ = 10;
     ros::NodeHandle nh_;
     ros::Subscriber sub_map_;
+    ros::Subscriber sub_map_static_;
     ros::Subscriber sub_vehicle_state_;
     ros::Publisher  pub_trajectory_;
 
     sensor_msgs::Image map_;
+    sensor_msgs::Image static_map_;
     geometry_msgs::Pose2D vehicle_state_;
     bool map_ready_ = false;
+    bool static_map_ready_ = false;
     bool vehicle_state_ready_ = false;
+
+    Environment* env_;
 };
 }
 

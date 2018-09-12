@@ -13,7 +13,14 @@ HeuristicRRT::HeuristicRRT(const RRTConf& rrt_conf)
 
 PlanningStatus HeuristicRRT::Solve(
     const geometry_msgs::Pose2D& vehicle_state,
-    const sensor_msgs::Image& map) {
+    Environment* environment) {
+
+    cv::Point2d init;
+    environment->GetPixelCoord(vehicle_state.x, vehicle_state.y, &init.x, &init.y);
+
+    cv::Mat img_env = environment->DynamicMap();
+    ImageProc::PlotPoint(img_env, init, Scalar(255));
+    imshow("environment", img_env);
 
     return PlanningStatus::OK();
 }

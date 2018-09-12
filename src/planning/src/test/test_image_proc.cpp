@@ -34,8 +34,6 @@ int main(int argv, char** argc) {
     // cv::imshow("origin_map", cv_image);
 
     auto start = std::chrono::system_clock::now();
-    // cv::Mat_<double> voronoi_prob_map = planning::ImageProc::GetVoronoiProbMap(cv_image);
-    // cv::Mat_<double> goal_prob_map = planning::ImageProc::GetTargetAttractiveMap(cv_image, Point(100,400));
     cv::Mat_<double> prob_map = planning::ImageProc::GetAttractiveProbMap(
         cv_image, Point(100,400), 1.0, 5.0);
     auto end = std::chrono::system_clock::now();

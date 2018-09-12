@@ -9,6 +9,7 @@ PlanningNode::PlanningNode(const ros::NodeHandle &nh)
     : nh_(nh) {
    ParamConfig();
    InitROS();
+   InitEnv();
    RegisterPlanner();
 }
 
@@ -48,9 +49,23 @@ void PlanningNode::ParamConfig() {
 void PlanningNode::InitROS() {
     sub_map_           = nh_.subscribe("/vrep/map", 10,
                          &PlanningNode::CallbackMap, this);
+    sub_map_static_    = nh_.subscribe("/vrep/map_static", 10,
+                                       &PlanningNode::CallbackMapStatic, this);
     sub_vehicle_state_ = nh_.subscribe("/vrep/vehicle_state", 10,
                          &PlanningNode::CallbackVehicleState, this);
     pub_trajectory_    = nh_.advertise<nav_msgs::Path>("/trajectory", rate_);
+}
+
+void PlanningNode::InitEnv() {
+    ros::Rate loop_rate(rate_);
+    while (ros::ok()) {
+        ros::spinOnce();
+        if (static_map_ready_) {
+            env_ = new Environment(static_map_, planning_conf_);
+            ROS_INFO("[PlanningNode] Environment initialized.");
+            break;
+        }
+    }
 }
 
 void PlanningNode::Run() {
@@ -59,8 +74,8 @@ void PlanningNode::Run() {
     while (ros::ok()) {
         ros::spinOnce();
         if (vehicle_state_ready_ && map_ready_) {
-            Environment env(map_, planning_conf_.vrep_conf().resolution());
-            auto status = rrt_planner_->Solve(vehicle_state_, map_);
+            env_->UpdateDynamicMap(map_);
+            auto status = rrt_planner_->Solve(vehicle_state_, env_);
             if (status.ok()) {
                 ROS_INFO("Solve success.");
             }
@@ -76,8 +91,13 @@ void PlanningNode::RegisterPlanner() {
 
 void PlanningNode::CallbackMap(const sensor_msgs::Image &msg) {
     map_ = msg;
-    // ROS_INFO("callback map");
     map_ready_ = true;
+}
+
+void PlanningNode::CallbackMapStatic(const sensor_msgs::Image &msg) {
+    static_map_ = msg;
+    // ROS_INFO("callback map");
+    static_map_ready_ = true;
 }
 
 void PlanningNode::CallbackVehicleState(const geometry_msgs::PoseStamped &msg) {

@@ -4,3 +4,4 @@ planning/cmake-build-debug
 .catkin_tools
 build
 devel
+src/planning/venv/

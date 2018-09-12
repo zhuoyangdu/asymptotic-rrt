@@ -41,6 +41,7 @@ add_library(planning
         src/rrt/tree.h
         src/rrt/node.h
         src/common/image_proc.cpp
+        src/common/environment.cpp
 )
 
 target_link_libraries(planning

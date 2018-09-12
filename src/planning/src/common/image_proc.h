@@ -27,8 +27,7 @@ class ImageProc {
     ImageProc() = delete;
 
     static void FromROSImageToOpenCV(const sensor_msgs::Image &image,
-                                     cv_bridge::CvImagePtr cv_image,
-                                     const std::string& opencv_win);
+                                     cv_bridge::CvImagePtr cv_image);
 
     static std::vector<Point> GetVertex(const cv::Mat& image);
 
@@ -41,6 +40,9 @@ class ImageProc {
         const cv::Mat& image, const cv::Point& goal,
         double k_voronoi, double k_goal);
 
+    static void PlotPoint(const cv::Mat& image,
+                          const Point& point,
+                          const cv::Scalar& scalar);
  private:
 
 

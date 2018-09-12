@@ -1,7 +1,18 @@
 use_sim_time : true
 rrt_conf {
     time_step : 0.1
+    k_voronoi : 2.0
+    k_goal : 5.0
 }
 vrep_conf {
-    resolution : 512
+    resolutionX : 512
+    resolutionY : 512
+    minX : -10.0
+    maxX : 10.0
+    minY : -10.0
+    maxY : 10.0
+}
+goal {
+    x: 4.0
+    y: -4.0
 }
