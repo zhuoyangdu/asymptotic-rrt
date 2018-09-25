@@ -1,17 +1,15 @@
-//
-// Created by zy on 18-9-10.
-//
+// Copyright [2018] <Zhuoyang Du>
+
+#include <ros/ros.h>
+#include <ros/package.h>
+#include <signal.h>
 
 #include <iostream>
 #include <string>
 #include <chrono>
 
-#include <ros/ros.h>
-#include <ros/package.h>
-
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <signal.h>
 
 #include "../common/image_proc.h"
 
@@ -35,7 +33,7 @@ int main(int argv, char** argc) {
 
     auto start = std::chrono::system_clock::now();
     cv::Mat_<double> prob_map = planning::ImageProc::GetAttractiveProbMap(
-        cv_image, Point(100,400), 1.0, 5.0);
+        cv_image, Point(100, 400), 1.0, 5.0);
     auto end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);

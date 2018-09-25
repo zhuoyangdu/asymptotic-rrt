@@ -1,9 +1,7 @@
-//
-// Created by zy on 18-9-6.
-//
+// Copyright [2018] <Zhuoyang Du>
 
-#ifndef PLANNING_RRT_NODE_H_
-#define PLANNING_RRT_NODE_H_
+#ifndef SRC_PLANNING_SRC_RRT_NODE_H_
+#define SRC_PLANNING_SRC_RRT_NODE_H_
 
 #include <vector>
 
@@ -11,20 +9,19 @@ namespace planning {
 
 class Node {
  public:
-    Node() {};
+  Node() {}
 
  private:
-    double x_;
-    double y_;
-    double theta_;
-    Node* parent_node = nullptr;
-    std::vector<Node *> children_;
+  double x_;
+  double y_;
+  double theta_;
+  Node *parent_node = nullptr;
+  std::vector<Node *> children_;
 
-    /// number of child nodes.
-    unsigned int degree_;
-
+  /// number of child nodes.
+  unsigned int degree_;
 };
 
-}
+}  // namespace planning
 
-#endif //PLANNING_RRT_NODE_H_
+#endif  // SRC_PLANNING_SRC_RRT_NODE_H_

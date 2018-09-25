@@ -1,24 +1,25 @@
-//
-// Created by zy on 18-9-10.
-//
+// Copyright [2018] <Zhuoyang Du>
 
-#ifndef PLANNING_ENVIRONMENT_H
-#define PLANNING_ENVIRONMENT_H
-
-#include <iostream>
-#include <vector>
+#ifndef SRC_PLANNING_SRC_COMMON_ENVIRONMENT_H_
+#define SRC_PLANNING_SRC_COMMON_ENVIRONMENT_H_
 
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <geometry_msgs/Pose2D.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+
+#include <planning_conf.pb.h>
+
+#include <iostream>
+#include <vector>
+#include <utility>
+
+#include "image_proc.h"
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
-#include "image_proc.h"
-#include "planning_conf.pb.h"
 
 namespace planning {
 class Environment {
@@ -66,9 +67,8 @@ class Environment {
     cv::Point2d pixel_goal_;
 
     cv::Mat_<double> attractive_map_;
-
 };
 
-}
+}  // namespace planning
 
-#endif //PLANNING_ENVIRONMENT_2D_H
+#endif  // SRC_PLANNING_SRC_COMMON_ENVIRONMENT_H_

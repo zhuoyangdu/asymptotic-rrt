@@ -1,9 +1,7 @@
-//
-// Created by zy on 18-9-6.
-//
+// Copyright [2018] <Zhuoyang Du>
 
-#ifndef PLANNING_RRT_TREE_H_
-#define PLANNING_RRT_TREE_H_
+#ifndef SRC_PLANNING_SRC_RRT_TREE_H_
+#define SRC_PLANNING_SRC_RRT_TREE_H_
 
 #include "node.h"
 
@@ -18,7 +16,7 @@ class Tree {
     Node root_;
 };
 
-}
+}  // namespace planning
 
 
-#endif //PLANNING_RRT_TREE_H_
+#endif  // SRC_PLANNING_SRC_RRT_TREE_H_

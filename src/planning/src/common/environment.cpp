@@ -1,6 +1,4 @@
-//
-// Created by zy on 18-9-12.
-//
+// Copyright [2018] <Zhuoyang Du>
 
 #include "environment.h"
 
@@ -21,21 +19,21 @@ Environment::Environment(const sensor_msgs::Image& image,
     GetPixelCoord(goal_.x, goal_.y, &pixel_goal_.x, &pixel_goal_.y);
 
     is_init_ = true;
-    cv_bridge::CvImagePtr cv_image;
-    ImageProc::FromROSImageToOpenCV(image, cv_image);
-    map_static_ = cv_image->image.clone();
+    map_static_ = ImageProc::FromROSImageToOpenCV(image);
+
+    GenerateAttractiveProbMap();
 }
 
 void Environment::UpdateDynamicMap(const sensor_msgs::Image& image) {
-    cv_bridge::CvImagePtr cv_image;
-    ImageProc::FromROSImageToOpenCV(image, cv_image);
-    map_dynamic_ = cv_image->image.clone();
+    map_dynamic_ = ImageProc::FromROSImageToOpenCV(image);
 }
 
 void Environment::GetPixelCoord(double x, double y,
                                 double *row, double *col) {
-    *row = (rangeY_.second - y) / (rangeY_.second - rangeY_.first) * resolutionY_;
-    *col = (x - rangeX_.first) * resolutionX_ / (rangeX_.second - rangeX_.first);
+    *row = (rangeY_.second - y)
+         / (rangeY_.second - rangeY_.first) * resolutionY_;
+    *col = (x - rangeX_.first) * resolutionX_
+         / (rangeX_.second - rangeX_.first);
 }
 
 void Environment::GetWorldCoord(double row, double col,
@@ -52,7 +50,8 @@ void Environment::GenerateAttractiveProbMap() {
 }
 
 bool Environment::CheckCollisionByPixelCoord(double row, double col) {
-    int value = (int)map_dynamic_.at<uchar>(int(row), int(col));
+    int value = static_cast<int>(map_dynamic_.at<uchar>(static_cast<int>(row),
+                                                        static_cast<int>(col)));
     if (value == 0) {
         // Is collided.
         return true;
@@ -68,7 +67,8 @@ bool Environment::CheckCollisionByPixelCoord(const cv::Point& point) {
 bool Environment::CheckCollisionByWorldCoord(double x, double y) {
     double row, col;
     GetPixelCoord(x, y, &row, &col);
-    return CheckCollisionByPixelCoord(int(row), int(col));
+    return CheckCollisionByPixelCoord(static_cast<int>(row),
+                                      static_cast<int>(col));
 }
 
-}
+}  // namespace planning

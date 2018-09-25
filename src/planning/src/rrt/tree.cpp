@@ -1,13 +1,11 @@
-//
-// Created by zy on 18-9-6.
-//
+// Copyright [2018] <Zhuoyang Du>
 
 #include "tree.h"
 
 namespace planning {
 Tree::Tree(const planning::Node &root) :
     root_(root) {
-    
+
 }
 
 }

@@ -1,34 +1,33 @@
-//
-// Created by zy on 18-9-6.
-//
+// Copyright [2018] <Zhuoyang Du>
 
-#ifndef PLANNING_RRT_HEURISTIC_RRT_H_
-#define PLANNING_RRT_HEURISTIC_RRT_H_
-
-#include <iostream>
-#include <vector>
-#include <memory>
+#ifndef SRC_PLANNING_SRC_RRT_HEURISTIC_RRT_H_
+#define SRC_PLANNING_SRC_RRT_HEURISTIC_RRT_H_
 
 #include <ros/ros.h>
 #include <ros/package.h>
-#include <grid_map_ros/grid_map_ros.hpp>
-
 #include <sensor_msgs/Image.h>
 #include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 
-#include "planning_conf.pb.h"
+#include <planning_conf.pb.h>
+
+#include <iostream>
+#include <vector>
+#include <memory>
+
+#include <grid_map_ros/grid_map_ros.hpp>
 
 #include "../common/planning_status.h"
 #include "../common/environment.h"
+#include "../common/image_proc.h"
 
 namespace planning {
 
 class HeuristicRRT {
  public:
-    HeuristicRRT() {};
+    HeuristicRRT() = default;
 
     explicit HeuristicRRT(const RRTConf& rrt_conf);
 
@@ -36,6 +35,9 @@ class HeuristicRRT {
                          Environment* environment);
 
  private:
+    ros::NodeHandle private_nh_;
+    ros::Publisher pub_map_;
+
     PlanningStatus GetGridMap(
         const sensor_msgs::Image& image);
 
@@ -46,9 +48,8 @@ class HeuristicRRT {
     bool is_init_ = false;
 
     RRTConf rrt_conf_;
-
 };
 
-}
+}  // namespace planning
 
-#endif //PLANNING_RRT_HEURISTIC_RRT_H_
+#endif  // SRC_PLANNING_SRC_RRT_HEURISTIC_RRT_H_

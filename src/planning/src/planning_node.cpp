@@ -1,16 +1,15 @@
-//
-// Created by zy on 18-9-5.
-//
+// Copyright [2018] <Zhuoyang Du>
 
 #include "planning_node.h"
+#include <string>
 
 namespace planning {
 PlanningNode::PlanningNode(const ros::NodeHandle &nh)
     : nh_(nh) {
-   ParamConfig();
-   InitROS();
-   InitEnv();
-   RegisterPlanner();
+    ParamConfig();
+    InitROS();
+    InitEnv();
+    RegisterPlanner();
 }
 
 void PlanningNode::ParamConfig() {
@@ -28,7 +27,7 @@ void PlanningNode::ParamConfig() {
         return;
     }
     ZeroCopyInputStream *input = new FileInputStream(file_descriptor);
-    if(!TextFormat::Parse(input, &planning_conf_)) {
+    if (!TextFormat::Parse(input, &planning_conf_)) {
         ROS_ERROR("[PlanningNode] Failed to parse file.");
     }
     delete input;
@@ -43,7 +42,6 @@ void PlanningNode::ParamConfig() {
         ROS_INFO("[PlanningNode] Use sim time.");
         ros::param::set("/use_sim_time", true);
     }
-
 }
 
 void PlanningNode::InitROS() {
@@ -79,7 +77,8 @@ void PlanningNode::Run() {
             if (status.ok()) {
                 ROS_INFO("Solve success.");
             }
-            ros::spin();
+            cv::waitKey(1);
+            // ros::spin();
         }
         loop_rate.sleep();
     }
@@ -109,4 +108,4 @@ void PlanningNode::CallbackVehicleState(const geometry_msgs::PoseStamped &msg) {
     // ROS_INFO("callback vehicle state.");
 }
 
-}
+}  // namespace planning

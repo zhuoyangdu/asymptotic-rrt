@@ -1,9 +1,7 @@
-//
-// Created by zy on 18-9-6.
-//
+// Copyright [2018] <Zhuoyang Du>
 
-#ifndef PLANNING_COMMON_PLANNING_STATUS_H
-#define PLANNING_COMMON_PLANNING_STATUS_H
+#ifndef SRC_PLANNING_SRC_COMMON_PLANNING_STATUS_H_
+#define SRC_PLANNING_SRC_COMMON_PLANNING_STATUS_H_
 
 #include <string>
 
@@ -16,7 +14,6 @@ enum ErrorCode {
 
 class PlanningStatus {
  public:
-
     explicit PlanningStatus(ErrorCode code = ErrorCode::OK)
         : code_(code), msg_("") {
     }
@@ -42,6 +39,6 @@ class PlanningStatus {
     ErrorCode code_;
     std::string msg_;
 };
-}
+}  // namespace planning
 
-#endif //PLANNING_PLANNING_STATUS_H
+#endif  // SRC_PLANNING_SRC_COMMON_PLANNING_STATUS_H_

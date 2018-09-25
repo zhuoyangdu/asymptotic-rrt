@@ -1,27 +1,24 @@
-//
-// Created by zy on 18-9-5.
-//
+// Copyright [2018] <Zhuoyang Du>
 
-#ifndef PLANNING_PLANNING_NODE_H
-#define PLANNING_PLANNING_NODE_H
+#ifndef SRC_PLANNING_SRC_PLANNING_NODE_H_
+#define SRC_PLANNING_SRC_PLANNING_NODE_H_
 
-#include <iostream>
 #include <fcntl.h>
-
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <tf/transform_datatypes.h>
-
 #include <sensor_msgs/Image.h>
 #include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 
-#include "planning_conf.pb.h"
-
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+
+#include <planning_conf.pb.h>
+
+#include <iostream>
 
 #include "rrt/heuristic_rrt.h"
 #include "common/environment.h"
@@ -65,6 +62,6 @@ class PlanningNode {
 
     Environment* env_;
 };
-}
+}  // namespace planning
 
-#endif //PLANNING_PLANNING_NODE_H
+#endif  // SRC_PLANNING_SRC_PLANNING_NODE_H_

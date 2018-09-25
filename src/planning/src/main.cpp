@@ -1,6 +1,4 @@
-//
-// Created by zy on 18-9-5.
-//
+// Copyright [2018] <Zhuoyang Du>
 
 #include <ros/ros.h>
 
