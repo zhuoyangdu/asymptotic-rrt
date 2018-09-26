@@ -22,6 +22,7 @@ PlanningStatus HeuristicRRT::Solve(
     ImageProc::PlotPoint(img_env, init, Scalar(255));
     imshow("environment", img_env);
 
+    ROS_INFO("[HeuristicRRT] before to grid map");
     grid_map_msgs::GridMap message = ImageProc::ImageToGridMapMsg(img_env);
     pub_map_.publish(message);
 

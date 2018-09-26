@@ -55,32 +55,62 @@ void PlanningNode::InitROS() {
 }
 
 void PlanningNode::InitEnv() {
-    ros::Rate loop_rate(rate_);
-    while (ros::ok()) {
-        ros::spinOnce();
-        if (static_map_ready_) {
-            env_ = new Environment(static_map_, planning_conf_);
-            ROS_INFO("[PlanningNode] Environment initialized.");
-            break;
+    if (!planning_conf_.map_from_file()) {
+        ros::Rate loop_rate(rate_);
+        while (ros::ok()) {
+            ros::spinOnce();
+            if (static_map_ready_) {
+                env_ = new Environment(static_map_, planning_conf_);
+                ROS_INFO("[PlanningNode] Environment initialized.");
+                break;
+            }
+            loop_rate.sleep();
         }
+    } else {
+        ROS_INFO("[PlanningNode] read map from file.");
+        std::string map_path = ros::package::getPath("planning")
+                               + planning_conf_.map_path();
+        cv::Mat cv_image = cv::imread(map_path, CV_8U);
+        env_ = new Environment(cv_image, planning_conf_);
+        static_map_ready_ = true;
+        map_ready_ = true;
+
+        vehicle_state_.x = planning_conf_.fake_state().x();
+        vehicle_state_.y = planning_conf_.fake_state().y();
+        vehicle_state_.theta = planning_conf_.fake_state().theta();
+        vehicle_state_ready_ = true;
+        ROS_INFO("[PlanningNode] Environment initialized.");
     }
 }
 
 void PlanningNode::Run() {
     ROS_INFO("[PlanningNode] Planning node begins!");
+    /*
+    if (planning_conf_.map_from_file()) {
+        RunOnce();
+        cv::waitKey();
+        return;
+    }
+*/
     ros::Rate loop_rate(rate_);
     while (ros::ok()) {
         ros::spinOnce();
-        if (vehicle_state_ready_ && map_ready_) {
-            env_->UpdateDynamicMap(map_);
-            auto status = rrt_planner_->Solve(vehicle_state_, env_);
-            if (status.ok()) {
-                ROS_INFO("Solve success.");
-            }
-            cv::waitKey(1);
-            // ros::spin();
-        }
+        RunOnce();
         loop_rate.sleep();
+    }
+}
+
+void PlanningNode::RunOnce() {
+    if (vehicle_state_ready_ && map_ready_) {
+        if (!planning_conf_.map_from_file()) {
+            env_->UpdateDynamicMap(map_);
+        }
+        auto status = rrt_planner_->Solve(vehicle_state_, env_);
+        if (status.ok()) {
+            ROS_INFO("Solve success.");
+        }
+        cv::waitKey(1);
+        // ros::spin();
     }
 }
 

@@ -141,19 +141,24 @@ cv::Mat_<double> ImageProc::GetAttractiveProbMap(
     }
     attractive_prob = attractive_prob * (1.0 / max);
     imshow("prob map", attractive_prob);
+    return attractive_prob;
 }
 
 grid_map_msgs::GridMap ImageProc::ImageToGridMapMsg(const cv::Mat& image) {
     grid_map::GridMap map({"evaluation"});
-    map.setFrameId("world");
-    map.setGeometry(grid_map::Length(20, 20), 1.0 / 512);
+    ros::Time time = ros::Time::now();
+    map.setTimestamp(time.toNSec());
+    map.setFrameId("map");
+    map.setGeometry(grid_map::Length(20, 20), 20.0 / 512);
     ROS_INFO("Created map with size %f x %f m (%i x %i cells).",
              map.getLength().x(), map.getLength().y(),
              map.getSize()(0), map.getSize()(1));
-    grid_map::GridMapCvConverter::addLayerFromImage<unsigned char, 3>(
-                                                    image, "layer", map);
+    grid_map::GridMapCvConverter::addLayerFromImage<unsigned char, 1>(
+                                                    image, "evaluation",
+                                                    map, 0.0, 0.3, 0.3);
     grid_map_msgs::GridMap message;
     grid_map::GridMapRosConverter::toMessage(map, message);
+
     return  message;
 }
 

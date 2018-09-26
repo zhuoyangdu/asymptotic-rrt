@@ -30,6 +30,9 @@ class Environment {
     Environment(const sensor_msgs::Image& image,
                 const PlanningConf& planning_conf);
 
+    Environment(const cv::Mat& image,
+                const PlanningConf& planning_conf);
+
     ~Environment() = default;
 
     void GetPixelCoord(double x, double y,
@@ -51,9 +54,11 @@ class Environment {
     cv::Mat_<double> AttractiveMap() {return attractive_map_; }
 
  private:
+    void  InitParams();
+
     void GenerateAttractiveProbMap();
 
-    // Params
+    // Params.
     PlanningConf planning_conf_;
     int resolutionX_ = 512;
     int resolutionY_ = 512;

@@ -7,21 +7,33 @@ namespace planning {
 Environment::Environment(const sensor_msgs::Image& image,
                          const PlanningConf& planning_conf)
                          : planning_conf_(planning_conf) {
-    resolutionX_   = planning_conf.vrep_conf().resolutionx();
-    resolutionY_   = planning_conf.vrep_conf().resolutiony();
-    rangeX_.first  = planning_conf.vrep_conf().minx();
-    rangeX_.second = planning_conf.vrep_conf().maxx();
-    rangeY_.first  = planning_conf.vrep_conf().miny();
-    rangeY_.second = planning_conf.vrep_conf().maxy();
-
-    goal_.x = planning_conf.goal().x();
-    goal_.y = planning_conf.goal().y();
-    GetPixelCoord(goal_.x, goal_.y, &pixel_goal_.x, &pixel_goal_.y);
-
-    is_init_ = true;
+    InitParams();
     map_static_ = ImageProc::FromROSImageToOpenCV(image);
-
+    map_dynamic_ = map_static_;
     GenerateAttractiveProbMap();
+}
+
+Environment::Environment(const cv::Mat& image,
+                         const PlanningConf& planning_conf)
+                         : planning_conf_(planning_conf) {
+    InitParams();
+    map_static_ = image;
+    map_dynamic_ = map_static_;
+    GenerateAttractiveProbMap();
+}
+
+void Environment::InitParams() {
+    resolutionX_   = planning_conf_.vrep_conf().resolutionx();
+    resolutionY_   = planning_conf_.vrep_conf().resolutiony();
+    rangeX_.first  = planning_conf_.vrep_conf().minx();
+    rangeX_.second = planning_conf_.vrep_conf().maxx();
+    rangeY_.first  = planning_conf_.vrep_conf().miny();
+    rangeY_.second = planning_conf_.vrep_conf().maxy();
+
+    goal_.x = planning_conf_.goal().x();
+    goal_.y = planning_conf_.goal().y();
+    GetPixelCoord(goal_.x, goal_.y, &pixel_goal_.x, &pixel_goal_.y);
+    is_init_ = true;
 }
 
 void Environment::UpdateDynamicMap(const sensor_msgs::Image& image) {
@@ -47,6 +59,7 @@ void Environment::GenerateAttractiveProbMap() {
         map_static_, pixel_goal_,
         planning_conf_.rrt_conf().k_voronoi(),
         planning_conf_.rrt_conf().k_goal());
+    ROS_INFO("[Environment] Generated attractive prob map");
 }
 
 bool Environment::CheckCollisionByPixelCoord(double row, double col) {

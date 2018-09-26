@@ -31,6 +31,8 @@ class PlanningNode {
     void Run();
 
  private:
+    void RunOnce();
+
     void ParamConfig();
 
     void InitROS();

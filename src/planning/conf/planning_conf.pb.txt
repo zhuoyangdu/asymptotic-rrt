@@ -16,3 +16,10 @@ goal {
     x: 4.0
     y: -4.0
 }
+map_from_file : true
+map_path : "/resources/map/map.bmp"
+fake_state {
+    x: -4.0
+    y: -3.5
+    theta: 0
+}
