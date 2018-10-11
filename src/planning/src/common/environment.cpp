@@ -8,8 +8,13 @@ Environment::Environment(const sensor_msgs::Image& image,
                          const PlanningConf& planning_conf)
                          : planning_conf_(planning_conf) {
     InitParams();
-    map_static_ = ImageProc::FromROSImageToOpenCV(image);
+    map_static_  = ImageProc::FromROSImageToOpenCV(image);
     map_dynamic_ = map_static_;
+
+    cv::Size size     = cv::Size(map_static_.rows, map_static_.cols);
+    attractive_map_   = cv::Mat::zeros(size, CV_8UC1);
+    goal_prob_map_    = cv::Mat::zeros(size, CV_8UC1);
+    voronoi_prob_map_ = cv::Mat::zeros(size, CV_8UC1);
     GenerateAttractiveProbMap();
 }
 
@@ -55,10 +60,13 @@ void Environment::GetWorldCoord(double row, double col,
 }
 
 void Environment::GenerateAttractiveProbMap() {
-    attractive_map_ = ImageProc::GetAttractiveProbMap(
+    ImageProc::GetAttractiveProbMap(
         map_static_, pixel_goal_,
         planning_conf_.rrt_conf().k_voronoi(),
-        planning_conf_.rrt_conf().k_goal());
+        planning_conf_.rrt_conf().k_goal(),
+        &goal_prob_map_,
+        &voronoi_prob_map_,
+        &attractive_map_);
     ROS_INFO("[Environment] Generated attractive prob map");
 }
 

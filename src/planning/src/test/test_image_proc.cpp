@@ -32,8 +32,12 @@ int main(int argv, char** argc) {
     // cv::imshow("origin_map", cv_image);
 
     auto start = std::chrono::system_clock::now();
-    cv::Mat_<double> prob_map = planning::ImageProc::GetAttractiveProbMap(
-        cv_image, Point(100, 400), 1.0, 5.0);
+    cv::Mat prob_map;
+    cv::Mat goal_prob;
+    cv::Mat voronoi_prob;
+    planning::ImageProc::GetAttractiveProbMap(
+        cv_image, Point(100, 400), 1.0, 5.0,
+        &goal_prob, &voronoi_prob, &prob_map);
     auto end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);

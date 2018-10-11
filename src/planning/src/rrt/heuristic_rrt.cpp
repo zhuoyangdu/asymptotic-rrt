@@ -19,12 +19,16 @@ PlanningStatus HeuristicRRT::Solve(
                                &init.x, &init.y);
 
     cv::Mat img_env = environment->DynamicMap();
-    ImageProc::PlotPoint(img_env, init, Scalar(255));
-    imshow("environment", img_env);
+    // ImageProc::PlotPoint(img_env, init, Scalar(255));
+    // imshow("environment", img_env);
 
-    ROS_INFO("[HeuristicRRT] before to grid map");
     grid_map_msgs::GridMap message = ImageProc::ImageToGridMapMsg(img_env);
-    pub_map_.publish(message);
+
+    cv::Mat attractive_prob = environment->TargetAttractiveMap();
+    grid_map_msgs::GridMap goal_prob = ImageProc::ImageToGridMapMsg(
+                                      attractive_prob);
+    imshow("goal", attractive_prob);
+    pub_map_.publish(goal_prob);
 
     return PlanningStatus::OK();
 }

@@ -1,6 +1,6 @@
 use_sim_time : true
 rrt_conf {
-    time_step : 0.1
+    time_step : 0.5
     k_voronoi : 2.0
     k_goal : 5.0
 }

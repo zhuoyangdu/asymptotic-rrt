@@ -51,7 +51,9 @@ class Environment {
 
     cv::Mat DynamicMap() { return map_dynamic_; }
 
-    cv::Mat_<double> AttractiveMap() {return attractive_map_; }
+    cv::Mat AttractiveMap() {return attractive_map_; }
+
+    cv::Mat TargetAttractiveMap() {return goal_prob_map_;}
 
  private:
     void  InitParams();
@@ -71,7 +73,9 @@ class Environment {
     cv::Point2d goal_;
     cv::Point2d pixel_goal_;
 
-    cv::Mat_<double> attractive_map_;
+    cv::Mat attractive_map_;
+    cv::Mat goal_prob_map_;
+    cv::Mat voronoi_prob_map_;
 };
 
 }  // namespace planning
