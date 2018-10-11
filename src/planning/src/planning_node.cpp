@@ -107,7 +107,7 @@ void PlanningNode::RunOnce() {
         }
         auto status = rrt_planner_->Solve(vehicle_state_, env_);
         if (status.ok()) {
-            ROS_INFO("Solve success.");
+            // ROS_INFO("Solve success.");
         }
         cv::waitKey(1);
         // ros::spin();

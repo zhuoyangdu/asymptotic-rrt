@@ -22,13 +22,15 @@ PlanningStatus HeuristicRRT::Solve(
     // ImageProc::PlotPoint(img_env, init, Scalar(255));
     // imshow("environment", img_env);
 
-    grid_map_msgs::GridMap message = ImageProc::ImageToGridMapMsg(img_env);
-
-    cv::Mat attractive_prob = environment->TargetAttractiveMap();
-    grid_map_msgs::GridMap goal_prob = ImageProc::ImageToGridMapMsg(
-                                      attractive_prob);
-    imshow("goal", attractive_prob);
-    pub_map_.publish(goal_prob);
+    cv::Mat goal_prob       = environment->TargetAttractiveMap();
+    cv::Mat voronoi_prob    = environment->VoronoiAttractiveMap();
+    cv::Mat attractive_prob = environment->AttractiveMap();
+    grid_map_msgs::GridMap attractive_msg = ImageProc::ImageToGridMapMsg(
+                                            attractive_prob);
+    imshow("goal", goal_prob);
+    imshow("voronoi", voronoi_prob);
+    imshow("attractive", attractive_prob);
+    pub_map_.publish(attractive_msg);
 
     return PlanningStatus::OK();
 }

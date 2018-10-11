@@ -53,7 +53,7 @@ cv::Mat ImageProc::GetVoronoiProbMap(const cv::Mat& image) {
     vector<vector<Point2f> > facets;
     vector<Point2f> centers;
     subdiv.getVoronoiFacetList(vector<int>(), facets, centers);
-    Mat img_vor(image.rows, image.cols, CV_8U, Scalar(255));
+    Mat img_vor(image.rows, image.cols, CV_8UC1, Scalar(255));
     vector<Point2f> circle_center;
     for (vector<Point2f> p1 : facets) {
         for (Point2f p2 : p1) {
@@ -77,21 +77,29 @@ cv::Mat ImageProc::GetVoronoiProbMap(const cv::Mat& image) {
             int den = (i - kern_dim) * (i - kern_dim)
                     + (j - kern_dim) * (j - kern_dim);
             double k = (den == 0) ? 1.0 : 1.0 / sqrt(static_cast<double>(den));
-            kern.at<double>(i, j) = k / 255;
+            kern.at<double>(i, j) = k;
         }
     }
+    double k_min, k_max;
+    cv::minMaxIdx(kern, &k_min, &k_max);
+    cout << "kmin:" << k_min << ", kmax:" << k_max << endl;
 
-    Mat filter_image(image.rows, image.cols, CV_64F);
-    filter2D(img_vor , filter_image, img_vor.depth(), kern);
+    cv::Mat filter_image(image.rows, image.cols, CV_8U);
+    filter2D((255-img_vor) / 255 , filter_image, CV_8U, kern);
 
-
-    cv::Mat_<double> voronoi_prob(image.rows, image.cols);
+    cv::Mat voronoi_prob(image.rows, image.cols, CV_8U);
     double min, max;
     cv::minMaxIdx(filter_image, &min, &max);
-    voronoi_prob = 0.8 * (filter_image - min) / max + 0.2;
+    for (int i = 0; i < voronoi_prob.rows; ++i) {
+        for (int j = 0; j < voronoi_prob.cols; ++j) {
+            voronoi_prob.at<uchar>(i, j) =
+                static_cast<int>(filter_image.at<uchar>(i, j) * 255 / max);
+        }
+    }
     cv::minMaxIdx(voronoi_prob, &min, &max);
     std::cout << "GetVoronoiProbMap : min:" << min
         << ", max:" << max << std::endl;
+
     return voronoi_prob;
 }
 
@@ -102,7 +110,7 @@ cv::Mat ImageProc::GetTargetAttractiveMap(
         for (int j = 0; j < goal_prob.cols; ++j) {
             goal_prob.at<uchar>(i, j) =
                 int(255.0 / (sqrt(0.5 * ((goal.x - i) * (goal.x - i)
-                          + (goal.y - j) * (goal.y - j)) + 1)));
+                          + (goal.y - j) * (goal.y - j))) + 1));
         }
     }
     double min, max;
@@ -123,15 +131,23 @@ void ImageProc::GetAttractiveProbMap(
     *goal_prob_map
         = planning::ImageProc::GetTargetAttractiveMap(image, goal);
 
-    cv::Mat attractive_prob(cv::Size(image.rows, image.cols), CV_8UC1);
-    for (int i = 0; i < attractive_prob.rows; ++i) {
-        for (int j = 0; j < attractive_prob.cols; ++j) {
-            attractive_prob.at<uchar>(i, j) =
-                static_cast<int>(k_voronoi * voronoi_prob_map->at<uchar>(i, j)
-                               + k_goal * goal_prob_map->at<uchar>(i, j));
+    cv::Mat_<double> attractive_prob_double(cv::Size(image.rows, image.cols));
+    double max_prob = 0.0;
+    for (int i = 0; i < attractive_prob_double.rows; ++i) {
+        for (int j = 0; j < attractive_prob_double.cols; ++j) {
+            double value = k_voronoi * voronoi_prob_map->at<uchar>(i, j) +
+                           k_goal * goal_prob_map->at<uchar>(i, j);
+            attractive_prob_double.at<double>(i, j) = value;
+            max_prob = (max_prob > value) ? max_prob : value;
         }
     }
-    // attractive_prob = k_voronoi * *voronoi_prob_map + k_goal * *goal_prob_map;
+    cv::Mat attractive_prob(image.rows, image.cols, CV_8U);
+    for (int i = 0; i < attractive_prob_double.rows; ++i) {
+        for (int j = 0; j < attractive_prob_double.cols; ++j) {
+            attractive_prob.at<uchar>(i, j) =
+                int(attractive_prob_double.at<double>(i, j) / max_prob * 255);
+        }
+    }
     double min, max;
     cv::minMaxIdx(attractive_prob, &min, &max);
     std::cout << "GetAttractiveProbMap: min:"
@@ -145,7 +161,7 @@ void ImageProc::GetAttractiveProbMap(
             }
         }
     }
-    attractive_prob = attractive_prob * (1.0 / max);
+    // attractive_prob = attractive_prob * (1.0 / max);
     *attractive_prob_map = attractive_prob;
 }
 
@@ -157,14 +173,14 @@ grid_map_msgs::GridMap ImageProc::ImageToGridMapMsg(const cv::Mat& image) {
     map.setTimestamp(time.toNSec());
     map.setFrameId("map");
     map.setGeometry(grid_map::Length(20, 20), 20.0 / 50);
-    ROS_INFO("Created map with size %f x %f m (%i x %i cells).",
-             map.getLength().x(), map.getLength().y(),
-             map.getSize()(0), map.getSize()(1));
+    // ROS_INFO("Created map with size %f x %f m (%i x %i cells).",
+    //          map.getLength().x(), map.getLength().y(),
+    //          map.getSize()(0), map.getSize()(1));
     double min, max;
     cv::minMaxIdx(image, &min, &max);
     grid_map::GridMapCvConverter::addLayerFromImage<unsigned char, 1>(
                                                     compress_image, "elevation",
-                                                    map, min, max, 1);
+                                                    map, 0, 10, 0.1);
     grid_map_msgs::GridMap message;
     grid_map::GridMapRosConverter::toMessage(map, message);
 

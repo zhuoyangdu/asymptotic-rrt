@@ -55,6 +55,7 @@ class Environment {
 
     cv::Mat TargetAttractiveMap() {return goal_prob_map_;}
 
+    cv::Mat VoronoiAttractiveMap() {return voronoi_prob_map_;}
  private:
     void  InitParams();
 
