@@ -85,17 +85,13 @@ void PlanningNode::InitEnv() {
 
 void PlanningNode::Run() {
     ROS_INFO("[PlanningNode] Planning node begins!");
-    /*
-    if (planning_conf_.map_from_file()) {
-        RunOnce();
-        cv::waitKey();
-        return;
-    }
-*/
     ros::Rate loop_rate(rate_);
     while (ros::ok()) {
         ros::spinOnce();
         RunOnce();
+        cv::waitKey(0);
+        cv::destroyAllWindows();
+        return;
         loop_rate.sleep();
     }
 }
@@ -109,7 +105,6 @@ void PlanningNode::RunOnce() {
         if (status.ok()) {
             // ROS_INFO("Solve success.");
         }
-        cv::waitKey(1);
         // ros::spin();
     }
 }

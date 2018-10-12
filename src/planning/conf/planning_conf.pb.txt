@@ -1,7 +1,7 @@
 use_sim_time : true
 rrt_conf {
     time_step : 0.5
-    k_voronoi : 2.0
+    k_voronoi : 1.0
     k_goal : 5.0
 }
 vrep_conf {
@@ -13,8 +13,8 @@ vrep_conf {
     maxY : 10.0
 }
 goal {
-    x: 4.0
-    y: -4.0
+    x: 8.0
+    y: -8.0
 }
 map_from_file : true
 map_path : "/resources/map/map.bmp"
