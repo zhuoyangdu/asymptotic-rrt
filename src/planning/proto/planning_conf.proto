@@ -6,6 +6,8 @@ message RRTConf {
     optional double time_step = 1;
     optional double k_voronoi = 2;
     optional double k_goal = 3;
+    optional bool show_image = 4;
+    optional int32 max_attemp = 5;
 }
 
 message VrepConf {
@@ -36,4 +38,5 @@ message PlanningConf {
     optional bool map_from_file = 5;
     optional string map_path = 6;
     optional FakeState fake_state = 7;
+
 }

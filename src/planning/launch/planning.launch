@@ -5,5 +5,5 @@
     <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen">
         <rosparam command="load" file="$(find planning)/conf/grid_map.yaml" />
     </node>
-    <node name="rviz" pkg="rviz" type="rviz" />
+    <!-- node name="rviz" pkg="rviz" type="rviz" /> -->
 </launch>

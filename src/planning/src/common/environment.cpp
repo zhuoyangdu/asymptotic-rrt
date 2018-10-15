@@ -40,8 +40,8 @@ void Environment::InitParams() {
     GetPixelCoord(goal_.x, goal_.y, &pixel_goal_.x, &pixel_goal_.y);
     is_init_ = true;
 
-    std::cout << "goal:" << goal_.x << ", " << goal_.y << std::endl;
-    std::cout << "goal pixel:" << pixel_goal_.x << ", " << pixel_goal_.y << std::endl;
+    // std::cout << "goal:" << goal_.x << ", " << goal_.y << std::endl;
+    // std::cout << "goal pixel:" << pixel_goal_.x << ", " << pixel_goal_.y << std::endl;
 
 }
 

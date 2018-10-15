@@ -1,8 +1,10 @@
 use_sim_time : true
 rrt_conf {
+    show_image : true
     time_step : 0.5
     k_voronoi : 1.0
     k_goal : 5.0
+    max_attemp: 10
 }
 vrep_conf {
     resolutionX : 512
@@ -19,7 +21,7 @@ goal {
 map_from_file : true
 map_path : "/resources/map/map.bmp"
 fake_state {
-    x: -4.0
-    y: -3.5
+    x: -8.0
+    y: 8.5
     theta: 0
 }

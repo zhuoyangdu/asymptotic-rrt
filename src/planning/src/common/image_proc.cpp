@@ -10,7 +10,7 @@ namespace planning {
 void ImageProc::PlotPoint(const cv::Mat& image,
                           const Point& point,
                           const cv::Scalar& scalar) {
-    circle(image, point, 3, scalar, CV_FILLED, CV_AA, 0);
+    circle(image, point, 1, scalar, CV_FILLED, CV_AA, 0);
 }
 
 cv::Mat ImageProc::FromROSImageToOpenCV(const sensor_msgs::Image &image) {

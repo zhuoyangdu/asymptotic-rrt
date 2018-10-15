@@ -90,8 +90,7 @@ void PlanningNode::Run() {
         ros::spinOnce();
         RunOnce();
         cv::waitKey(0);
-        cv::destroyAllWindows();
-        return;
+        ros::spin();
         loop_rate.sleep();
     }
 }

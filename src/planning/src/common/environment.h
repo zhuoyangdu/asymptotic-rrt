@@ -56,6 +56,14 @@ class Environment {
     cv::Mat TargetAttractiveMap() {return goal_prob_map_;}
 
     cv::Mat VoronoiAttractiveMap() {return voronoi_prob_map_;}
+
+    cv::Point Goal() {
+        cv::Point goal;
+        goal.x = int(pixel_goal_.x);
+        goal.y = int(pixel_goal_.y);
+        return goal;
+    }
+    
  private:
     void  InitParams();
 

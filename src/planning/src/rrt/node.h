@@ -11,9 +11,21 @@ class Node {
  public:
   Node() {}
 
+  Node(int row, int col) {
+      row_ = row;
+      col_ = col;
+  }
+
+  void set_theta(double theta) { theta_ = theta; }
+
+  int row() { return row_; }
+
+  int col() { return col_; }
+
+  int theta() { return theta_; }
  private:
-  double x_;
-  double y_;
+  int row_;
+  int col_;
   double theta_;
   Node *parent_node = nullptr;
   std::vector<Node *> children_;
