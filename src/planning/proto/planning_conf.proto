@@ -8,6 +8,7 @@ message RRTConf {
     optional double k_goal = 3;
     optional bool show_image = 4;
     optional int32 max_attemp = 5;
+    optional int32 step_size = 6;
 }
 
 message VrepConf {

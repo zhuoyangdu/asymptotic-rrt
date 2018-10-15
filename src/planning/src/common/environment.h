@@ -41,11 +41,13 @@ class Environment {
     void GetWorldCoord(double row, double col,
                        double* x, double* y);
 
-    bool CheckCollisionByPixelCoord(double row, double col);
+    bool CheckCollisionByPixelCoord(double row, double col) const;
 
-    bool CheckCollisionByPixelCoord(const cv::Point& point);
+    bool CheckCollisionByPixelCoord(const cv::Point& point) const;
 
     bool CheckCollisionByWorldCoord(double x, double y);
+
+    bool CollisionCheckByEdge(const Node& a, const Node& b);
 
     void UpdateDynamicMap(const sensor_msgs::Image& image);
 
@@ -63,7 +65,7 @@ class Environment {
         goal.y = int(pixel_goal_.y);
         return goal;
     }
-    
+
  private:
     void  InitParams();
 

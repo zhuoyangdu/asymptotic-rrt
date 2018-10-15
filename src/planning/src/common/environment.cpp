@@ -74,7 +74,7 @@ void Environment::GenerateAttractiveProbMap() {
     ROS_INFO("[Environment] Generated attractive prob map");
 }
 
-bool Environment::CheckCollisionByPixelCoord(double row, double col) {
+bool Environment::CheckCollisionByPixelCoord(double row, double col) const {
     int value = static_cast<int>(map_dynamic_.at<uchar>(static_cast<int>(row),
                                                         static_cast<int>(col)));
     if (value == 0) {
@@ -85,7 +85,7 @@ bool Environment::CheckCollisionByPixelCoord(double row, double col) {
     }
 }
 
-bool Environment::CheckCollisionByPixelCoord(const cv::Point& point) {
+bool Environment::CheckCollisionByPixelCoord(const cv::Point& point) const {
     return CheckCollisionByPixelCoord(point.x, point.y);
 }
 
@@ -94,6 +94,11 @@ bool Environment::CheckCollisionByWorldCoord(double x, double y) {
     GetPixelCoord(x, y, &row, &col);
     return CheckCollisionByPixelCoord(static_cast<int>(row),
                                       static_cast<int>(col));
+}
+
+bool Environment::CollisionCheckByEdge(const Node& a,
+                                       const Node& b) {
+
 }
 
 }  // namespace planning

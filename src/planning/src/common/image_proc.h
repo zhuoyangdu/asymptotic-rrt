@@ -21,6 +21,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include "../rrt/node.h"
+
 using namespace cv;
 
 namespace planning {
@@ -50,7 +52,19 @@ class ImageProc {
 
     static void PlotPoint(const cv::Mat& image,
                           const Point& point,
-                          const cv::Scalar& scalar);
+                          const cv::Scalar& scalar,
+                          double thickness);
+
+    static void PlotPoint(const cv::Mat& image,
+                          const Node& node,
+                          const cv::Scalar& scalar,
+                          double thickness);
+
+    static void PlotLine(const cv::Mat& image,
+                         const Node& a,
+                         const Node& b,
+                         const cv::Scalar& scalar,
+                         double thickness);
 
     static grid_map_msgs::GridMap ImageToGridMapMsg(const cv::Mat& image);
 };

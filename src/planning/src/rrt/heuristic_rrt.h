@@ -38,18 +38,33 @@ class HeuristicRRT {
                          Environment* environment);
 
  private:
-    ros::NodeHandle private_nh_;
-    ros::Publisher pub_map_;
-
     PlanningStatus GetGridMap(
         const sensor_msgs::Image& image);
 
-    void UniformSample();
+    struct Compare {
+        Compare(Node sample) {this->sample = sample;}
+        bool operator() (Node& a, Node& b) {
+            int dist1 = (a.col() - sample.col()) * (a.col() - sample.col())
+                      + (a.row() - sample.row()) * (a.row() - sample.row());
+            int dist2 = (b.col() - sample.col()) * (b.col() - sample.col())
+                      + (b.row() - sample.row()) * (b.row() - sample.row());
+            return dist1 > dist2;
+        }
+       Node sample;
+    };
 
-    Node HeuristicSample(const cv::Mat& attractive_prob);
+    bool GetNearestNode(const Node& sample,
+                        const std::vector<Node> tree,
+                        Node* nearest_node);
+
+    bool CheckCollision(const Node& a, const Node& b, const Environment& env);
+
+    void Steer(const Node& sample, const Node& nearest, Node* new_node);
+
+    ros::NodeHandle private_nh_;
+    ros::Publisher pub_map_;
 
     bool is_init_ = false;
-
     RRTConf rrt_conf_;
     bool show_image_ = false;
 };

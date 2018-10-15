@@ -9,8 +9,25 @@ namespace planning {
 
 void ImageProc::PlotPoint(const cv::Mat& image,
                           const Point& point,
-                          const cv::Scalar& scalar) {
-    circle(image, point, 1, scalar, CV_FILLED, CV_AA, 0);
+                          const cv::Scalar& scalar,
+                          double thickness) {
+    circle(image, point, thickness, scalar, CV_FILLED, CV_AA, 0);
+}
+
+void ImageProc::PlotPoint(const cv::Mat& image,
+                          const Node& node,
+                          const cv::Scalar& scalar,
+                          double thickness) {
+    PlotPoint(image, cv::Point(node.col(), node.row()), scalar, thickness);
+}
+
+void ImageProc::PlotLine(const cv::Mat& image,
+                         const Node& a,
+                         const Node& b,
+                         const cv::Scalar& scalar,
+                         double thickness) {
+    line(image, cv::Point(a.col(), a.row()),
+         cv::Point(b.col(), b.row()), scalar, thickness);
 }
 
 cv::Mat ImageProc::FromROSImageToOpenCV(const sensor_msgs::Image &image) {
