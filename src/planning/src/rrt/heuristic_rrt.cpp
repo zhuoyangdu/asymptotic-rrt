@@ -143,7 +143,7 @@ PlanningStatus HeuristicRRT::Solve(
 
         std::vector<Node> spline_path = PostProcessing(min_path, environment);
     }
-    Record(tree);
+    Record(tree, spline_path, min_path);
 
     if (show_image_)
         imshow("environment", img_env);
@@ -389,7 +389,9 @@ string int2string(int value)
     return ss.str();
 }
 
-void HeuristicRRT::Record(const std::vector<Node>& tree) {
+void HeuristicRRT::Record(const std::vector<Node>& tree,
+                          const std::vector<Node>& spline_path,
+                          const std::vector<Node>& path) {
     time_t t = std::time(0);
     struct tm * now = std::localtime( & t );
     string time_s;
@@ -403,7 +405,7 @@ void HeuristicRRT::Record(const std::vector<Node>& tree) {
 
     std::string file_name = rrt_conf_.record_path() 
                             + "/tree-" + time_s + ".txt";
-    std::ofstream out_file(file_name_.c_str());
+    std::ofstream out_file(file_name.c_str());
     if (!out_file) {
         ROS_INFO("no file!");
     }
@@ -413,6 +415,22 @@ void HeuristicRRT::Record(const std::vector<Node>& tree) {
             >> "\n";
     }
     out_file.close();
+
+    file_name = rrt_conf_.record_path() 
+                + "/path-" + time_s + ".txt";
+    std::ofstream out_path_file(file_name.c_str());
+    for (Node node : path) {
+        out_path_file >> node.row() >> "\t" >> node.col() >> "\n";
+    }
+    out_path_file.close();
+
+    file_name = rrt_conf_.record_path() 
+                + "/splinepath-" + time_s + ".txt";
+    std::ofstream out_spath_file(file_name.c_str());
+    for (Node node : path) {
+        out_spath_file >> node.row() >> "\t" >> node.col() >> "\n";
+    }
+    out_spath_file.close();
 }
 
 }  // namespace planning
