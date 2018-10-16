@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
     roslib
     cv_bridge
-    grid_map_ros
 )
 
 include(FindProtobuf)
@@ -25,8 +24,8 @@ find_package(OpenCV REQUIRED)
 
 catkin_package(
     LIBRARIES planning
-    CATKIN_DEPENDS roscpp rospy roslib std_msgs geometry_msgs sensor_msgs cv_bridge grid_map_ros
-)
+    CATKIN_DEPENDS roscpp rospy roslib std_msgs geometry_msgs sensor_msgs cv_bridge
+    )
 
 include_directories(
     ${catkin_INCLUDE_DIRS}

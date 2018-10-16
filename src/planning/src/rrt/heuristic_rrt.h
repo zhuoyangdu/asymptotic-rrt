@@ -17,8 +17,6 @@
 #include <vector>
 #include <memory>
 
-#include <grid_map_ros/grid_map_ros.hpp>
-
 #include "../common/planning_status.h"
 #include "../common/environment.h"
 #include "../common/image_proc.h"
@@ -72,7 +70,7 @@ class HeuristicRRT {
                                      const Environment* env);
 
     void Record(const std::vector<Node>& tree);
-     
+
     ros::NodeHandle private_nh_;
     ros::Publisher pub_map_;
 

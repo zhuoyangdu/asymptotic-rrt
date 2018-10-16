@@ -6,7 +6,7 @@
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
-#include <grid_map_msgs/GridMap.h>
+// #include <grid_map_msgs/GridMap.h>
 
 #include <iostream>
 #include <string>
@@ -15,8 +15,8 @@
 #include <set>
 #include <cmath>
 
-#include <grid_map_ros/grid_map_ros.hpp>
-#include <grid_map_cv/grid_map_cv.hpp>
+// #include <grid_map_ros/grid_map_ros.hpp>
+// #include <grid_map_cv/grid_map_cv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -81,7 +81,7 @@ class ImageProc {
                          const cv::Scalar& scalar,
                          double thickness);
 
-    static grid_map_msgs::GridMap ImageToGridMapMsg(const cv::Mat& image);
+    // static grid_map_msgs::GridMap ImageToGridMapMsg(const cv::Mat& image);
 };
 }  // namespace planning
 #endif  // SRC_PLANNING_SRC_COMMON_IMAGE_PROC_H_

@@ -252,7 +252,7 @@ void ImageProc::GetObstacleRepulsiveField(const cv::Mat& image,
         << min << ", max:" << max << std::endl;
 
 }
-
+/*
 grid_map_msgs::GridMap ImageProc::ImageToGridMapMsg(const cv::Mat& image) {
     cv::Mat compress_image;
     cv::resize(image, compress_image, cv::Size(50, 50));
@@ -274,4 +274,5 @@ grid_map_msgs::GridMap ImageProc::ImageToGridMapMsg(const cv::Mat& image) {
 
     return  message;
 }
+*/
 }  // namespace planning
