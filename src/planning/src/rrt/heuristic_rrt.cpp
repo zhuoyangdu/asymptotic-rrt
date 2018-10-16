@@ -12,8 +12,8 @@ namespace planning {
 HeuristicRRT::HeuristicRRT(const PlanningConf& planning_conf)
         : rrt_conf_(planning_conf.rrt_conf()), is_init_(true),
           planning_conf_(planning_conf) {
-    pub_map_ = private_nh_.advertise<grid_map_msgs::GridMap>(
-                "/planning/map", 1, true);
+    // pub_map_ = private_nh_.advertise<grid_map_msgs::GridMap>(
+    //             "/planning/map", 1, true);
     show_image_ = rrt_conf_.show_image();
 }
 
@@ -35,11 +35,11 @@ PlanningStatus HeuristicRRT::Solve(
     cv::Mat voronoi_prob    = environment->VoronoiAttractiveMap();
     cv::Mat attractive_prob = environment->AttractiveMap();
 
-    grid_map_msgs::GridMap attractive_msg = ImageProc::ImageToGridMapMsg(
-                                            attractive_prob);
+    // grid_map_msgs::GridMap attractive_msg = ImageProc::ImageToGridMapMsg(
+    //                                         attractive_prob);
     if (show_image_)
         imshow("attractive", attractive_prob);
-    pub_map_.publish(attractive_msg);
+    // pub_map_.publish(attractive_msg);
     ProbablisticMap probablistic_map(attractive_prob);
 
     Node init_node(int(init.x), int(init.y), vehicle_state.theta);
@@ -403,7 +403,7 @@ void HeuristicRRT::Record(const std::vector<Node>& tree,
           '-'+int2string(now->tm_min)+
           '-'+int2string(now->tm_sec);
 
-    std::string file_name = rrt_conf_.record_path() 
+    std::string file_name = rrt_conf_.record_path()
                             + "/tree-" + time_s + ".txt";
     std::ofstream out_file(file_name.c_str());
     if (!out_file) {
