@@ -1,11 +1,12 @@
 use_sim_time : true
 rrt_conf {
-    show_image : true
+    show_image : false
     time_step : 0.5
     k_voronoi : 1.0
     k_goal : 5.0
-    max_attemp: 100
-    step_size: 30
+    max_attemp: 5000
+    step_size: 15
+    turn_on_prior: true
 }
 vrep_conf {
     resolutionX : 512
@@ -16,11 +17,11 @@ vrep_conf {
     maxY : 10.0
 }
 goal {
-    x: 8.0
-    y: -8.0
+    x: 4.5
+    y: -3.0
 }
 map_from_file : true
-map_path : "/resources/map/map.bmp"
+map_path : "/resources/map/map14.bmp"
 fake_state {
     x: -8.0
     y: 8.5

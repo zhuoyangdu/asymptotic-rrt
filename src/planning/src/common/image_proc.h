@@ -66,6 +66,11 @@ class ImageProc {
                          const cv::Scalar& scalar,
                          double thickness);
 
+    static void PlotPath(const cv::Mat& image,
+                         const std::vector<Node> path,
+                         const cv::Scalar& scalar,
+                         double thickness);
+
     static grid_map_msgs::GridMap ImageToGridMapMsg(const cv::Mat& image);
 };
 }  // namespace planning

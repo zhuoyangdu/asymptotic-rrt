@@ -109,7 +109,7 @@ void PlanningNode::RunOnce() {
 }
 
 void PlanningNode::RegisterPlanner() {
-    rrt_planner_.reset(new HeuristicRRT(planning_conf_.rrt_conf()));
+    rrt_planner_.reset(new HeuristicRRT(planning_conf_));
 }
 
 void PlanningNode::CallbackMap(const sensor_msgs::Image &msg) {

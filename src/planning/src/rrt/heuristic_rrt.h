@@ -26,13 +26,15 @@
 #include "tree.h"
 #include "probablistic_map.h"
 
+using namespace std;
+
 namespace planning {
 
 class HeuristicRRT {
  public:
     HeuristicRRT() = default;
 
-    explicit HeuristicRRT(const RRTConf& rrt_conf);
+    explicit HeuristicRRT(const PlanningConf& planning_conf);
 
     PlanningStatus Solve(const geometry_msgs::Pose2D& vehicle_state,
                          Environment* environment);
@@ -59,14 +61,22 @@ class HeuristicRRT {
 
     bool CheckCollision(const Node& a, const Node& b, const Environment& env);
 
-    void Steer(const Node& sample, const Node& nearest, Node* new_node);
+    bool Steer(const Node& sample, const Node& nearest, Node* new_node);
+
+    bool CheckTarget(const Node& node, const Node& goal);
+
+    vector<Node> GetPath(const std::vector<Node>& tree, const Node& new_node);
+
+    double PathLength(const std::vector<Node>& path);
 
     ros::NodeHandle private_nh_;
     ros::Publisher pub_map_;
 
     bool is_init_ = false;
+    PlanningConf planning_conf_;
     RRTConf rrt_conf_;
     bool show_image_ = false;
+    double shortest_path_length_ = 0;
 };
 
 }  // namespace planning

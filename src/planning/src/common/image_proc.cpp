@@ -30,6 +30,15 @@ void ImageProc::PlotLine(const cv::Mat& image,
          cv::Point(b.col(), b.row()), scalar, thickness);
 }
 
+void ImageProc::PlotPath(const cv::Mat& image,
+                         const std::vector<Node> path,
+                         const cv::Scalar& scalar,
+                         double thickness) {
+    for (int i = 0; i < path.size()-1; ++i) {
+        PlotLine(image, path[i], path[i+1], scalar, thickness);
+    }
+}
+
 cv::Mat ImageProc::FromROSImageToOpenCV(const sensor_msgs::Image &image) {
     cv_bridge::CvImagePtr cv_image;
     try {
