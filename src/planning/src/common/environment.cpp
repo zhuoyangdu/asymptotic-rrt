@@ -16,6 +16,7 @@ Environment::Environment(const sensor_msgs::Image& image,
     goal_prob_map_    = cv::Mat::zeros(size, CV_8UC1);
     voronoi_prob_map_ = cv::Mat::zeros(size, CV_8UC1);
     GenerateAttractiveProbMap();
+
 }
 
 Environment::Environment(const cv::Mat& image,
@@ -25,6 +26,10 @@ Environment::Environment(const cv::Mat& image,
     map_static_ = image;
     map_dynamic_ = map_static_;
     GenerateAttractiveProbMap();
+
+    ImageProc::GetObstacleRepulsiveField(map_static_,
+                                         &repulsive_filed_x_,
+                                         &repulsive_filed_y_);
 }
 
 void Environment::InitParams() {
@@ -35,9 +40,11 @@ void Environment::InitParams() {
     rangeY_.first  = planning_conf_.vrep_conf().miny();
     rangeY_.second = planning_conf_.vrep_conf().maxy();
 
-    goal_.x = planning_conf_.goal().x();
-    goal_.y = planning_conf_.goal().y();
-    GetPixelCoord(goal_.x, goal_.y, &pixel_goal_.x, &pixel_goal_.y);
+    //goal_.x = planning_conf_.goal().x();
+    //goal_.y = planning_conf_.goal().y();
+    //GetPixelCoord(goal_.x, goal_.y, &pixel_goal_.x, &pixel_goal_.y);
+    pixel_goal_.x = planning_conf_.goal().row();
+    pixel_goal_.y = planning_conf_.goal().col();
     is_init_ = true;
 
     // std::cout << "goal:" << goal_.x << ", " << goal_.y << std::endl;
@@ -96,9 +103,6 @@ bool Environment::CheckCollisionByWorldCoord(double x, double y) {
                                       static_cast<int>(col));
 }
 
-bool Environment::CollisionCheckByEdge(const Node& a,
-                                       const Node& b) {
 
-}
 
 }  // namespace planning

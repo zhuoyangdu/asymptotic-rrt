@@ -69,6 +69,9 @@ class HeuristicRRT {
 
     double PathLength(const std::vector<Node>& path);
 
+    std::vector<Node> PostProcessing(const std::vector<Node>& path,
+                                     const Environment* env);
+
     ros::NodeHandle private_nh_;
     ros::Publisher pub_map_;
 
@@ -77,6 +80,7 @@ class HeuristicRRT {
     RRTConf rrt_conf_;
     bool show_image_ = false;
     double shortest_path_length_ = 0;
+    std::vector<Node> min_path;
 };
 
 }  // namespace planning

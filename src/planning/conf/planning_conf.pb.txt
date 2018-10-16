@@ -4,9 +4,10 @@ rrt_conf {
     time_step : 0.5
     k_voronoi : 1.0
     k_goal : 5.0
-    max_attemp: 5000
+    max_attemp: 1000
     step_size: 15
     turn_on_prior: true
+    k_repulsive: 10
 }
 vrep_conf {
     resolutionX : 512
@@ -17,13 +18,13 @@ vrep_conf {
     maxY : 10.0
 }
 goal {
-    x: 4.5
-    y: -3.0
+    row: 400
+    col: 500
 }
 map_from_file : true
-map_path : "/resources/map/map14.bmp"
+map_path : "/resources/map/map.bmp"
 fake_state {
     x: -8.0
-    y: 8.5
+    y: 7.5
     theta: 0
 }

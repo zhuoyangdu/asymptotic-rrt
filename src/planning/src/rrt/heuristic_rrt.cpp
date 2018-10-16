@@ -3,7 +3,7 @@
 #include "heuristic_rrt.h"
 #include <queue>
 #include <functional>
-
+#include "float.h"
 using namespace std;
 
 namespace planning {
@@ -117,8 +117,13 @@ PlanningStatus HeuristicRRT::Solve(
                         << ", parent:" << node.parent_index() << std::endl;
                 }
                 shortest_path_length_ = path_length;
+                min_path = path;
             }
         }
+    }
+
+    if (min_path.size()!=0) {
+        std::vector<Node> spline_path = PostProcessing(min_path, environment);
     }
 
     if (show_image_)
@@ -226,8 +231,207 @@ double HeuristicRRT::PathLength(const std::vector<Node>& path) {
     return length;
 }
 
-//std::vector<Node> HeuristicRRT::PostProcessing() {
+std::vector<Node> HeuristicRRT::PostProcessing(
+        const std::vector<Node>& path,
+        const Environment* env) {
+    cv::Mat img_env;
+    cvtColor(env->DynamicMap(), img_env, COLOR_GRAY2BGR);
 
-//}
+    cv::Mat repulsive_row = env->RepulsiveX();
+    cv::Mat repulsive_col = env->RepulsiveY();
+    std::vector<double> x;
+    std::vector<double> y;
+    for (Node node : path) {
+        x.push_back(node.row());
+        y.push_back(node.col());
+    }
+    double init_a = -path[0].theta();
+    double y1, y0, x1, x0;
+    if (init_a <= M_PI/4 && init_a >=-M_PI/4) {
+        y1 = y[0] - 40;
+        y0 = (5*y[0]-y1)/4;
+        x1 = -2*((0.5* y[0] - 0.5*y1) * tan(init_a) - 0.5*x[0]);
+        x0 = (5*x[0] - x1)/4;
+    } else if (init_a >= 3*M_PI/4 || init_a <= -3*M_PI/4) {
+        y1 = y[0] + 40;
+        y0 = (5*y[0]-y1)/4;
+        x1 = -2*((0.5* y[0] - 0.5*y1) * tan(init_a) - 0.5*x[0]);
+        x0 = (5*x[0] - x1)/4;
+    } else if (init_a>M_PI/4 && init_a<= 3*M_PI/4) {
+        x1 = x[0] - 40;
+        x0 = (5*x[0] - x1)/4;
+        y1 = -2*((0.5* x[0]  - 0.5*x1)/ tan(init_a) - 0.5*y[0]);
+        y0 = (5*y[0]-y1)/4;
+    } else if (init_a>-3*M_PI/4 && init_a<= -M_PI/4) {
+        x1 = x[0] + 40;
+        x0 = (5*x[0] - x1)/4;
+        y1 = -2*((0.5* x[0] - 0.5*x1)/ tan(init_a) - 0.5*y[0]);
+        y0 = (5*y[0]-y1)/4;
+    }
+
+    x.insert(x.begin(), {x1, x0});
+    y.insert(y.begin(), {y1, y0});
+    int size = x.size();
+    x.push_back(2*x[size-1] - x[size-2]);
+    y.push_back(2*y[size-1] - y[size-2]);
+    size += 3;
+
+    ImageProc::PlotPath(img_env, x, y, Scalar(0,0,255), 2);
+
+    std::cout << "inita:" << init_a << endl;
+    cout << "x[0]:" << x[2] << ", " << y[2] << endl;
+    cout << "x0:" << x0 << ", " << y0 << endl;
+    cout << "x1:" << x1 << ", " << y1 << endl;
+
+    std::vector<double> s;
+    for (int i = 0; i < size; ++i) {
+        s.push_back(1.0/(size-1) * i);
+    }
+
+    double s_error = DBL_MAX;
+    double p_error = DBL_MAX;
+    double error;
+    std::vector<double> bspline_s, bspline_x, bspline_y, bspline_a;
+    for (int n = 0; n < 20; ++n) {
+        bspline_s.clear();
+        bspline_x.clear();
+        bspline_y.clear();
+        bspline_a.clear();
+        std::vector<double> l_phi_dx, l_phi_dy, p_phi_x, p_phi_y;
+        for (int i = 0; i < size; ++i) {
+            l_phi_dx.push_back(0);
+            l_phi_dy.push_back(0);
+            p_phi_x.push_back(0);
+            p_phi_y.push_back(0);
+        }
+        for (int i = 2; i < size -2; ++i) {
+            std::vector<double> b0, b1, b2, b3, b0_dot, b1_dot, b2_dot, b3_dot;
+            std::vector<double> S, X, Y, Xd, Yd, A;
+            for (int t = 0; t <20; ++t) {
+                double u = t * 1.0 / 19.0;
+                b0.push_back(pow(1.0-u,3)/6.0);
+                b1.push_back((3.0*pow(u,3)-6.0*pow(u,2)+4)/6.0);
+                b2.push_back((-3.0*pow(u,3)+3.0*pow(u,2)+3.0*u+1.0)/6.0);
+                b3.push_back(pow(u,3)/6.0);
+                b0_dot.push_back(-pow(1.0-u,2)/2.0);
+                b1_dot.push_back(1.5*pow(u,2)-2.0*u);
+                b2_dot.push_back(-1.5*pow(u,2)+u+0.5);
+                b3_dot.push_back(0.5*pow(u,2));
+            }
+
+            for (int t = 0; t <20; ++t) {
+                Xd.push_back(x[i-2] * b0_dot[t] +
+                             x[i-1] * b1_dot[t] +
+                             x[i] * b2_dot[t] +
+                             x[i+1] * b3_dot[t]);
+                Yd.push_back(y[i-2] * b0_dot[t] +
+                             y[i-1] * b1_dot[t] +
+                             y[i] * b2_dot[t] +
+                             y[i+1] * b3_dot[t]);
+                A.push_back(atan2(Xd[t], Yd[t]));
+                X.push_back(x[i-2] * b0[t] +
+                             x[i-1] * b1[t] +
+                             x[i] * b2[t] +
+                             x[i+1] * b3[t]);
+                Y.push_back(y[i-2] * b0[t] +
+                             y[i-1] * b1[t] +
+                             y[i] * b2[t] +
+                             y[i+1] * b3[t]);
+            }
+
+            double sumx0 = 0.0, sumx1 = 0.0, sumx2 = 0.0, sumx3 = 0.0;
+            double sumy0 = 0.0, sumy1 = 0.0, sumy2 = 0.0, sumy3 = 0.0;
+            for (int t = 0; t < 20; ++t) {
+                sumx0 += 2.0 * Xd[t] * b0_dot[t];
+                sumx1 += 2.0 * Xd[t] * b1_dot[t];
+                sumx2 += 2.0 * Xd[t] * b2_dot[t];
+                sumx3 += 2.0 * Xd[t] * b3_dot[t];
+                sumy0 += 2.0 * Yd[t] * b0_dot[t];
+                sumy1 += 2.0 * Yd[t] * b1_dot[t];
+                sumy2 += 2.0 * Yd[t] * b2_dot[t];
+                sumy3 += 2.0 * Yd[t] * b3_dot[t];
+                //cout << " sum :" << sumx0 << ", " << sumx1 << "." << sumx2 << ", " << sumx3
+                //    << ":sumy0:" << sumy0 << ", " << sumy1 << "." << sumy2 << "," << sumy3 <<endl;
+            }
+            l_phi_dx[i-2] += sumx0;
+            l_phi_dx[i-1] += sumx1;
+            l_phi_dx[i]   += sumx2;
+            l_phi_dx[i+1] += sumx3;
+            l_phi_dy[i-2] += sumy0;
+            l_phi_dy[i-1] += sumy1;
+            l_phi_dy[i]   += sumy2;
+            l_phi_dy[i+1] += sumy3;
+
+            std::vector<double> px, py;
+            for (int j = 0; j < 20; ++j) {
+                int xk = X[j];
+                int yk = Y[j];
+                xk = xk > 511 ? 511 : xk;
+                xk = xk < 0 ? 0 : xk;
+                yk = yk > 511 ? 511 : yk;
+                yk = yk < 0 ? 0 : yk;
+                px.push_back(repulsive_row.at<double>(xk, yk));
+                py.push_back(repulsive_row.at<double>(xk, yk));
+            }
+
+            sumx0 = 0.0, sumx1 = 0.0, sumx2 = 0.0, sumx3 = 0.0;
+            sumy0 = 0.0, sumy1 = 0.0, sumy2 = 0.0, sumy3 = 0.0;
+            for (int t = 0; t < 20; ++t) {
+                sumx0 += px[t] * b0[t];
+                sumx1 += px[t] * b1[t];
+                sumx2 += px[t] * b2[t];
+                sumx3 += px[t] * b3[t];
+                sumy0 += py[t] * b0[t];
+                sumy1 += py[t] * b1[t];
+                sumy2 += py[t] * b2[t];
+                sumy3 += py[t] * b3[t];
+            }
+            p_phi_x[i-2] += sumx0;
+            p_phi_x[i-1] += sumx1;
+            p_phi_x[i]   += sumx2;
+            p_phi_x[i+1] += sumx3;
+            p_phi_y[i-2] += sumy0;
+            p_phi_y[i-1] += sumy1;
+            p_phi_y[i]   += sumy2;
+            p_phi_y[i+1] += sumy3;
+
+            double path_l = 0.0;
+            for (int t = 0; t < X.size(); ++t) {
+                bspline_x.push_back(X[i]);
+                bspline_y.push_back(Y[i]);
+                if (t != 0) {
+                    path_l += sqrt(pow(bspline_x[t]-bspline_x[t-1],2) +
+                                   pow(bspline_y[t]-bspline_y[t-1],2));
+                }
+            }
+
+            s_error = 0.0;
+            p_error = 0.0;
+            for (int t = 2; t < size-2; ++t) {
+                s_error += fabs(l_phi_dx[t]) + fabs(l_phi_dy[t]);
+                p_error += fabs(p_phi_x[t]) + fabs(p_phi_y[t]);
+            }
+            //cout << "serror:" << s_error << ", p_error:" << p_error << endl;
+            error = s_error + p_error;
+            int lambda = rrt_conf_.k_repulsive();
+            for (int t = 3; t < size-3; ++t) {
+                x[t] -= 0.01 * (1.2 * l_phi_dx[t] / 512 * 20 - lambda * p_phi_x[t]);
+                y[t] -= 0.01 * (1.2 * l_phi_dy[t] / 512 * 20- lambda * p_phi_y[t]);
+            }
+            ImageProc::PlotPath(img_env, x, y, Scalar(0,255,255),1);
+        }
+    }
+
+    std::vector<Node> spline_path;
+    for (int i = 0 ; i < bspline_x.size(); ++i) {
+        spline_path.push_back(Node(bspline_x[i], bspline_y[i]));
+    }
+
+    // ImageProc::PlotPath(img_env, path, Scalar(255,0,0), 2);
+    ImageProc::PlotPath(img_env, x, y, Scalar(0,255,0), 2);
+    imshow("path", img_env);
+
+    return path;
+}
 
 }  // namespace planning

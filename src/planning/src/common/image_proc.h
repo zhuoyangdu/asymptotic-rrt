@@ -50,6 +50,10 @@ class ImageProc {
             cv::Mat* voronoi_prob_map,
             cv::Mat* attractive_prob_map);
 
+    static void GetObstacleRepulsiveField(const cv::Mat& image,
+                                          cv::Mat* repulsive_filed_x,
+                                          cv::Mat* repulsive_filed_y);
+
     static void PlotPoint(const cv::Mat& image,
                           const Point& point,
                           const cv::Scalar& scalar,
@@ -68,6 +72,12 @@ class ImageProc {
 
     static void PlotPath(const cv::Mat& image,
                          const std::vector<Node> path,
+                         const cv::Scalar& scalar,
+                         double thickness);
+
+    static void PlotPath(const cv::Mat& image,
+                         const std::vector<double> x,
+                         const std::vector<double> y,
                          const cv::Scalar& scalar,
                          double thickness);
 

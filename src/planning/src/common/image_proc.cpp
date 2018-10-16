@@ -39,6 +39,16 @@ void ImageProc::PlotPath(const cv::Mat& image,
     }
 }
 
+void ImageProc::PlotPath(const cv::Mat& image,
+                         const std::vector<double> x,
+                         const std::vector<double> y,
+                         const cv::Scalar& scalar,
+                         double thickness) {
+    for (int i = 0; i < x.size()-1; ++i) {
+        line(image, cv::Point(y[i], x[i]), cv::Point(y[i+1], x[i+1]), scalar, thickness);
+    }
+}
+
 cv::Mat ImageProc::FromROSImageToOpenCV(const sensor_msgs::Image &image) {
     cv_bridge::CvImagePtr cv_image;
     try {
@@ -189,6 +199,60 @@ void ImageProc::GetAttractiveProbMap(
     }
     // attractive_prob = attractive_prob * (1.0 / max);
     *attractive_prob_map = attractive_prob;
+}
+
+void ImageProc::GetObstacleRepulsiveField(const cv::Mat& image,
+                                          cv::Mat* repulsive_filed_x,
+                                          cv::Mat* repulsive_filed_y) {
+    std::vector<cv::Point> vertex = GetVertex(image);
+    cv::Mat img_cont = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
+    for (cv::Point p : vertex) {
+        PlotPoint(img_cont, p, Scalar(255), 2);
+    }
+    // imshow("contours", img_cont);
+
+    int kern_dim = 50;
+    cv::Mat kern_x = cv::Mat::zeros(kern_dim*2+1, kern_dim*2+1, CV_64F);
+    cv::Mat kern_y = cv::Mat::zeros(kern_dim*2+1, kern_dim*2+1, CV_64F);
+    cv::Mat kern = cv::Mat::zeros(kern_dim*2+1, kern_dim*2+1, CV_64F);
+    for (int i = 0; i < kern_dim*2+1; ++i) {
+        for (int j = 0; j < kern_dim*2+1; ++j) {
+            if (i == kern_dim && j == kern_dim) {
+                kern_x.at<double>(i,j) = 0.0;
+                kern_y.at<double>(i,j) = 0.0;
+            } else {
+                double num = pow(pow(kern_dim-i, 2) + pow(kern_dim-j, 2), 2);
+                kern_x.at<double>(i,j) = (kern_dim - i) / num;
+                kern_y.at<double>(i,j) = (kern_dim - j) / num;
+            }
+        }
+    }
+    /*
+    std::cout << "x:" << std::endl;
+    for (int i = 0; i < kern_dim*2+1; ++i) {
+        for (int j = 0; j < kern_dim*2+1; ++j) {
+            std::cout << kern_x.at<double>(i,j) << " ";
+        }
+        cout << endl;
+    }
+    std::cout << "y:" << std::endl;
+    for (int i = 0; i < kern_dim*2+1; ++i) {
+        for (int j = 0; j < kern_dim*2+1; ++j) {
+            std::cout << kern_y.at<double>(i,j) << " ";
+        }
+        cout << endl;
+    }
+*/
+    filter2D(img_cont/255, *repulsive_filed_x, CV_64F, kern_x);
+    filter2D(img_cont/255, *repulsive_filed_y, CV_64F, kern_y);
+    for (int i = 0; i < image.rows; ++i) {
+        for (int j = 0; j < image.cols; ++j) {
+            if (image.at<uchar>(i,j) == 0) {
+                repulsive_filed_x->at<double>(i,j) = 5.0;
+                repulsive_filed_y->at<double>(i,j) = 5.0;
+            }
+        }
+    }
 }
 
 grid_map_msgs::GridMap ImageProc::ImageToGridMapMsg(const cv::Mat& image) {

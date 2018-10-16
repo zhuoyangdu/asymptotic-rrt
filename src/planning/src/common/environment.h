@@ -51,13 +51,17 @@ class Environment {
 
     void UpdateDynamicMap(const sensor_msgs::Image& image);
 
-    cv::Mat DynamicMap() { return map_dynamic_; }
+    cv::Mat DynamicMap() const { return map_dynamic_; }
 
     cv::Mat AttractiveMap() {return attractive_map_; }
 
     cv::Mat TargetAttractiveMap() {return goal_prob_map_;}
 
     cv::Mat VoronoiAttractiveMap() {return voronoi_prob_map_;}
+
+    cv::Mat RepulsiveX() const { return repulsive_filed_x_; }
+
+    cv::Mat RepulsiveY() const { return repulsive_filed_y_; }
 
     Node Goal() {
         return Node(int(pixel_goal_.x), int(pixel_goal_.y));
@@ -85,6 +89,8 @@ class Environment {
     cv::Mat attractive_map_;
     cv::Mat goal_prob_map_;
     cv::Mat voronoi_prob_map_;
+    cv::Mat repulsive_filed_x_;
+    cv::Mat repulsive_filed_y_;
 };
 
 }  // namespace planning
