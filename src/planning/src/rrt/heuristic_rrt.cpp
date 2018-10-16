@@ -270,14 +270,6 @@ std::vector<Node> HeuristicRRT::PostProcessing(
         y0 = (5*y[0]-y1)/4;
     }
 
-/*
-    double dist = 40;
-    y1 = y[0] - dist * cos(init_a);
-    y0 = y[0] - dist / 2 * cos(init_a);
-    x1 = x[0] + dist * sin(init_a);
-    x0 = x[0] + dist / 2 * sin(init_a);
-*/
-
     x.insert(x.begin(), {x1, x0});
     y.insert(y.begin(), {y1, y0});
     int size = x.size();
@@ -285,28 +277,7 @@ std::vector<Node> HeuristicRRT::PostProcessing(
     y.push_back(2*y[size-1] - y[size-2]);
     size = x.size();
 
-
-    // ImageProc::PlotPath(img_env, x, y, Scalar(0,0,255), 2);
-
-    std::cout << "inita:" << init_a << endl;
-    cout << "x[0]:" << x[2] << ", " << y[2] << endl;
-    cout << "x0:" << x0 << ", " << y0 << endl;
-    cout << "x1:" << x1 << ", " << y1 << endl;
-
-    std::vector<double> s;
-    for (int i = 0; i < size; ++i) {
-        s.push_back(1.0/(size-1) * i);
-    }
-
-    double s_error = DBL_MAX;
-    double p_error = DBL_MAX;
-    double error;
-    std::vector<double> bspline_s, bspline_x, bspline_y, bspline_a;
     for (int n = 0; n < rrt_conf_.post_iteration(); ++n) {
-        bspline_s.clear();
-        bspline_x.clear();
-        bspline_y.clear();
-        bspline_a.clear();
         std::vector<double> l_phi_dx, l_phi_dy, p_phi_x, p_phi_y;
         for (int i = 0; i < size; ++i) {
             l_phi_dx.push_back(0);
@@ -315,112 +286,66 @@ std::vector<Node> HeuristicRRT::PostProcessing(
             p_phi_y.push_back(0);
         }
         for (int i = 2; i < size -2; ++i) {
-            std::vector<double> b0, b1, b2, b3, b0_dot, b1_dot, b2_dot, b3_dot;
-            std::vector<double> S, X, Y, Xd, Yd, A;
             for (int t = 0; t <20; ++t) {
-                double u = t * 1.0 / 19.0;
-                b0.push_back(pow(1.0-u,3)/6.0);
-                b1.push_back((3.0*pow(u,3)-6.0*pow(u,2)+4)/6.0);
-                b2.push_back((-3.0*pow(u,3)+3.0*pow(u,2)+3.0*u+1.0)/6.0);
-                b3.push_back(pow(u,3)/6.0);
-                b0_dot.push_back(-pow(1.0-u,2)/2.0);
-                b1_dot.push_back(1.5*pow(u,2)-2.0*u);
-                b2_dot.push_back(-1.5*pow(u,2)+u+0.5);
-                b3_dot.push_back(0.5*pow(u,2));
-            }
+                double u  = t * 1.0 / 19.0;
+                double b0 = pow(1.0-u,3)/6.0;
+                double b1 = (3.0*pow(u,3)-6.0*pow(u,2)+4)/6.0;
+                double b2 = (-3.0*pow(u,3)+3.0*pow(u,2)+3.0*u+1.0)/6.0;
+                double b3 = pow(u,3)/6.0;
 
-            for (int t = 0; t <20; ++t) {
-                Xd.push_back(x[i-2] * b0_dot[t] +
-                             x[i-1] * b1_dot[t] +
-                             x[i] * b2_dot[t] +
-                             x[i+1] * b3_dot[t]);
-                Yd.push_back(y[i-2] * b0_dot[t] +
-                             y[i-1] * b1_dot[t] +
-                             y[i] * b2_dot[t] +
-                             y[i+1] * b3_dot[t]);
-                A.push_back(atan2(Xd[t], Yd[t]));
-                X.push_back(x[i-2] * b0[t] +
-                             x[i-1] * b1[t] +
-                             x[i] * b2[t] +
-                             x[i+1] * b3[t]);
-                Y.push_back(y[i-2] * b0[t] +
-                             y[i-1] * b1[t] +
-                             y[i] * b2[t] +
-                             y[i+1] * b3[t]);
-            }
+                double b0_dot = -pow(1.0-u,2)/2.0;
+                double b1_dot = 1.5*pow(u,2)-2.0*u;
+                double b2_dot = -1.5*pow(u,2)+u+0.5;
+                double b3_dot = 0.5*pow(u,2);
 
-            double sumx0 = 0.0, sumx1 = 0.0, sumx2 = 0.0, sumx3 = 0.0;
-            double sumy0 = 0.0, sumy1 = 0.0, sumy2 = 0.0, sumy3 = 0.0;
-            for (int t = 0; t < 20; ++t) {
-                sumx0 += 2.0 * Xd[t] * b0_dot[t];
-                sumx1 += 2.0 * Xd[t] * b1_dot[t];
-                sumx2 += 2.0 * Xd[t] * b2_dot[t];
-                sumx3 += 2.0 * Xd[t] * b3_dot[t];
-                sumy0 += 2.0 * Yd[t] * b0_dot[t];
-                sumy1 += 2.0 * Yd[t] * b1_dot[t];
-                sumy2 += 2.0 * Yd[t] * b2_dot[t];
-                sumy3 += 2.0 * Yd[t] * b3_dot[t];
-            }
-            l_phi_dx[i-2] += sumx0;
-            l_phi_dx[i-1] += sumx1;
-            l_phi_dx[i]   += sumx2;
-            l_phi_dx[i+1] += sumx3;
-            l_phi_dy[i-2] += sumy0;
-            l_phi_dy[i-1] += sumy1;
-            l_phi_dy[i]   += sumy2;
-            l_phi_dy[i+1] += sumy3;
+                double xd = x[i-2] * b0_dot + x[i-1] * b1_dot +
+                            x[i] * b2_dot + x[i+1] * b3_dot;
+                double yd = y[i-2] * b0_dot + y[i-1] * b1_dot +
+                            y[i] * b2_dot + y[i+1] * b3_dot;
+                double xk = x[i-2] * b0 + x[i-1] * b1 +
+                            x[i] * b2 + x[i+1] * b3;
+                double yk = y[i-2] * b0 + y[i-1] * b1 +
+                            y[i] * b2 + y[i+1] * b3;
 
-            std::vector<double> px, py;
-            for (int j = 0; j < 20; ++j) {
-                int xk = X[j];
-                int yk = Y[j];
+                l_phi_dx[i-2] += 2.0 * xd * b0_dot;
+                l_phi_dx[i-1] += 2.0 * xd * b1_dot;
+                l_phi_dx[i]   += 2.0 * xd * b2_dot;
+                l_phi_dx[i+1] += 2.0 * xd * b3_dot;
+                l_phi_dy[i-2] += 2.0 * yd * b0_dot;
+                l_phi_dy[i-1] += 2.0 * yd * b1_dot;
+                l_phi_dy[i]   += 2.0 * yd * b2_dot;
+                l_phi_dy[i+1] += 2.0 * yd * b3_dot;
+
                 xk = xk > 511 ? 511 : xk;
                 xk = xk < 0 ? 0 : xk;
                 yk = yk > 511 ? 511 : yk;
                 yk = yk < 0 ? 0 : yk;
-                px.push_back(repulsive_row.at<double>(xk, yk));
-                py.push_back(repulsive_col.at<double>(xk, yk));
-                // ImageProc::PlotPoint(img_env, Node(xk,yk), Scalar(100,100,200),1);
-            }
 
-            sumx0 = 0.0, sumx1 = 0.0, sumx2 = 0.0, sumx3 = 0.0;
-            sumy0 = 0.0, sumy1 = 0.0, sumy2 = 0.0, sumy3 = 0.0;
-            for (int t = 0; t < 20; ++t) {
-                sumx0 += px[t] * b0[t];
-                sumx1 += px[t] * b1[t];
-                sumx2 += px[t] * b2[t];
-                sumx3 += px[t] * b3[t];
-                sumy0 += py[t] * b0[t];
-                sumy1 += py[t] * b1[t];
-                sumy2 += py[t] * b2[t];
-                sumy3 += py[t] * b3[t];
-            }
-            p_phi_x[i-2] += sumx0;
-            p_phi_x[i-1] += sumx1;
-            p_phi_x[i]   += sumx2;
-            p_phi_x[i+1] += sumx3;
-            p_phi_y[i-2] += sumy0;
-            p_phi_y[i-1] += sumy1;
-            p_phi_y[i]   += sumy2;
-            p_phi_y[i+1] += sumy3;
+                double px = repulsive_row.at<double>(xk, yk);
+                double py = repulsive_col.at<double>(xk, yk);
 
+                p_phi_x[i-2] += px * b0;
+                p_phi_x[i-1] += px * b1;
+                p_phi_x[i]   += px * b2;
+                p_phi_x[i+1] += px * b3;
+                p_phi_y[i-2] += py * b0;
+                p_phi_y[i-1] += py * b1;
+                p_phi_y[i]   += py * b2;
+                p_phi_y[i+1] += py * b3;
+            }
         }
 
-        s_error = 0.0;
-        p_error = 0.0;
+        double s_error = 0.0;
+        double p_error = 0.0;
         for (int t = 2; t < size-2; ++t) {
             s_error += fabs(l_phi_dx[t]) + fabs(l_phi_dy[t]);
             p_error += fabs(p_phi_x[t]) + fabs(p_phi_y[t]);
         }
-        error = s_error + p_error;
+        double error = s_error + p_error;
         double lambda = rrt_conf_.k_repulsive();
         for (int t = 3; t < size-3; ++t) {
-            //cout << "before:" << x[t] << ", " << y[t] << endl;
             x[t] -= 0.01 * (1.2 * l_phi_dx[t] / 512 * 20 - lambda * p_phi_x[t]);
             y[t] -= 0.01 * (1.2 * l_phi_dy[t] / 512 * 20 - lambda * p_phi_y[t]);
-            //cout << "x: " << x[t] << "y:" << y[t] << " p_phi_x:" << p_phi_x[t]
-             //  << ", p_phi_y:" << p_phi_y[t] << endl;
-
         }
         ImageProc::PlotPath(img_env, x, y, Scalar(0,255,255),1);
     }
