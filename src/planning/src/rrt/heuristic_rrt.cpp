@@ -3,6 +3,7 @@
 #include "heuristic_rrt.h"
 #include <queue>
 #include <functional>
+#include <chrono>
 #include "float.h"
 using namespace std;
 
@@ -52,17 +53,22 @@ PlanningStatus HeuristicRRT::Solve(
     std::cout << "init pixel:" << init_node.row() << ", " << init_node.col() << std::endl;
     std::cout << "goal pixel:" << goal_node.row() << ", " << goal_node.col() << std::endl;
 
+    auto start = std::chrono::system_clock::now();
     int i = 0;
     while (i < rrt_conf_.max_attemp()) {
+        i++;
         if ( i % 200 == 0) {
-            std::cout << "iteration " << i << " times." << std::endl;
+            // std::cout << "iteration " << i << " times." << std::endl;
             i ++;
         }
 
         // Heuristic sample.
+        auto t1 = std::chrono::system_clock::now();
         Node sample = probablistic_map.Sampling();
-        // ImageProc::PlotPoint(img_env, cv::Point(sample.col(), sample.row()),
-        //                     Scalar(200, 200, 0), 2);
+        auto t2 = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = t2 - t1;
+        std::cout << "Sampling elapsed seconds:" << elapsed_seconds.count() << "s\n";
+
         // Path prior.
         bool turn_on_prior = rrt_conf_.turn_on_prior();
             if (turn_on_prior) {
@@ -74,16 +80,25 @@ PlanningStatus HeuristicRRT::Solve(
         }
 
         // Find parent node.
+        t1 = std::chrono::system_clock::now();
         Node nearest_node;
         if (!GetNearestNode(sample, tree, &nearest_node)) {
             continue;
         }
+        t2 = std::chrono::system_clock::now();
+        elapsed_seconds = t2 - t1;
+        std::cout << "GetNearestNode elapsed seconds:" << elapsed_seconds.count() << "s\n";
+
 
         // Steer.
         Node new_node;
+        t1 = std::chrono::system_clock::now();
         if (! Steer(sample, nearest_node, &new_node)) {
             continue;
         }
+        t2 = std::chrono::system_clock::now();
+        elapsed_seconds = t2 - t1;
+        std::cout << "Steer elapsed seconds:" << elapsed_seconds.count() << "s\n";
 
         // ImageProc::PlotPoint(img_env, new_node, Scalar(0, 200, 255), 3);
         // Check collision.
@@ -93,7 +108,6 @@ PlanningStatus HeuristicRRT::Solve(
             continue;
         }
         // Add to tree.
-        i = i + 1;
         new_node.SetIndex(tree.size());
         new_node.SetParent(nearest_node.index());
         tree.push_back(new_node);
@@ -107,21 +121,24 @@ PlanningStatus HeuristicRRT::Solve(
                 ImageProc::PlotPath(img_env, path, Scalar(0,0,255), 2);
             }
             double path_length = PathLength(path);
-            std::cout << "A  path found" << path_length << "!" << std::endl;
+            // std::cout << "A  path found" << path_length << "!" << std::endl;
             if (shortest_path_length_==0 || shortest_path_length_ > path_length) {
                 std::cout << "A shorter path found!" << std::endl;
-                std::cout << "path length: " << path_length << std::endl;
+                //std::cout << "path length: " << path_length << std::endl;
                 for (Node node : path) {
-                    std::cout << "row: " << node.row() << ", col: " << node.col()
-                        << ", theta: " << node.theta() << ", id: " << node.index()
-                        << ", parent:" << node.parent_index() << std::endl;
+                    //std::cout << "row: " << node.row() << ", col: " << node.col()
+                    //    << ", theta: " << node.theta() << ", id: " << node.index()
+                    //    << ", parent:" << node.parent_index() << std::endl;
                 }
                 shortest_path_length_ = path_length;
                 min_path = path;
             }
         }
     }
-
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+    std::cout << "elapsed seconds:" << elapsed_seconds.count() << "s\n";
     if (min_path.size()!=0) {
         std::vector<Node> spline_path = PostProcessing(min_path, environment);
     }
@@ -347,7 +364,7 @@ std::vector<Node> HeuristicRRT::PostProcessing(
             x[t] -= 0.01 * (1.2 * l_phi_dx[t] / 512 * 20 - lambda * p_phi_x[t]);
             y[t] -= 0.01 * (1.2 * l_phi_dy[t] / 512 * 20 - lambda * p_phi_y[t]);
         }
-        ImageProc::PlotPath(img_env, x, y, Scalar(0,255,255),1);
+        // ImageProc::PlotPath(img_env, x, y, Scalar(0,255,255),1);
     }
 
     std::vector<Node> spline_path;
@@ -356,8 +373,8 @@ std::vector<Node> HeuristicRRT::PostProcessing(
     }
 
     // ImageProc::PlotPath(img_env, path, Scalar(255,0,0), 2);
-    ImageProc::PlotPath(img_env, spline_path, Scalar(0,255,0), 2);
-    imshow("path", img_env);
+    // ImageProc::PlotPath(img_env, spline_path, Scalar(0,255,0), 2);
+    // imshow("path", img_env);
 
     return path;
 }
