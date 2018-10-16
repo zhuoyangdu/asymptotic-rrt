@@ -227,32 +227,30 @@ void ImageProc::GetObstacleRepulsiveField(const cv::Mat& image,
             }
         }
     }
-    /*
-    std::cout << "x:" << std::endl;
-    for (int i = 0; i < kern_dim*2+1; ++i) {
-        for (int j = 0; j < kern_dim*2+1; ++j) {
-            std::cout << kern_x.at<double>(i,j) << " ";
-        }
-        cout << endl;
-    }
-    std::cout << "y:" << std::endl;
-    for (int i = 0; i < kern_dim*2+1; ++i) {
-        for (int j = 0; j < kern_dim*2+1; ++j) {
-            std::cout << kern_y.at<double>(i,j) << " ";
-        }
-        cout << endl;
-    }
-*/
-    filter2D(img_cont/255, *repulsive_filed_x, CV_64F, kern_x);
-    filter2D(img_cont/255, *repulsive_filed_y, CV_64F, kern_y);
+
+    filter2D(img_cont, *repulsive_filed_x, CV_64F, kern_x);
+    filter2D(img_cont, *repulsive_filed_y, CV_64F, kern_y);
     for (int i = 0; i < image.rows; ++i) {
         for (int j = 0; j < image.cols; ++j) {
             if (image.at<uchar>(i,j) == 0) {
-                repulsive_filed_x->at<double>(i,j) = 5.0;
-                repulsive_filed_y->at<double>(i,j) = 5.0;
+                repulsive_filed_x->at<double>(i,j) = 255.0;
+                repulsive_filed_y->at<double>(i,j) = 255.0;
+            }
+            if (img_cont.at<uchar>(i,j) == 255) {
+                repulsive_filed_x->at<double>(i,j) = 255.0;
+                repulsive_filed_y->at<double>(i,j) = 255.0;
             }
         }
     }
+    double min, max;
+    cv::minMaxIdx(*repulsive_filed_x , &min, &max);
+    std::cout << "repulsive_filed_x: min:"
+        << min << ", max:" << max << std::endl;
+
+    cv::minMaxIdx(*repulsive_filed_y , &min, &max);
+    std::cout << "repulsive_filed_y: min:"
+        << min << ", max:" << max << std::endl;
+
 }
 
 grid_map_msgs::GridMap ImageProc::ImageToGridMapMsg(const cv::Mat& image) {

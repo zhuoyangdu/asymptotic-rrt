@@ -7,7 +7,8 @@ rrt_conf {
     max_attemp: 1000
     step_size: 15
     turn_on_prior: true
-    k_repulsive: 10
+    k_repulsive: 0.4
+    post_iteration: 200
 }
 vrep_conf {
     resolutionX : 512
@@ -18,8 +19,8 @@ vrep_conf {
     maxY : 10.0
 }
 goal {
-    row: 400
-    col: 500
+    row: 480
+    col: 470
 }
 map_from_file : true
 map_path : "/resources/map/map.bmp"

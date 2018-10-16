@@ -83,6 +83,7 @@ class Environment {
     bool is_init_ = false;
     cv::Mat map_static_;
     cv::Mat map_dynamic_;
+    cv::Mat dilate_map_;
     cv::Point2d goal_;
     cv::Point2d pixel_goal_;
 

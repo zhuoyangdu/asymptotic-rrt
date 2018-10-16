@@ -23,7 +23,6 @@
 #include "../common/environment.h"
 #include "../common/image_proc.h"
 #include "node.h"
-#include "tree.h"
 #include "probablistic_map.h"
 
 using namespace std;

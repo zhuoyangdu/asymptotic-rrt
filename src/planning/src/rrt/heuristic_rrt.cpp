@@ -245,8 +245,9 @@ std::vector<Node> HeuristicRRT::PostProcessing(
         x.push_back(node.row());
         y.push_back(node.col());
     }
-    double init_a = -path[0].theta();
+    double init_a = path[0].theta();
     double y1, y0, x1, x0;
+
     if (init_a <= M_PI/4 && init_a >=-M_PI/4) {
         y1 = y[0] - 40;
         y0 = (5*y[0]-y1)/4;
@@ -269,14 +270,23 @@ std::vector<Node> HeuristicRRT::PostProcessing(
         y0 = (5*y[0]-y1)/4;
     }
 
+/*
+    double dist = 40;
+    y1 = y[0] - dist * cos(init_a);
+    y0 = y[0] - dist / 2 * cos(init_a);
+    x1 = x[0] + dist * sin(init_a);
+    x0 = x[0] + dist / 2 * sin(init_a);
+*/
+
     x.insert(x.begin(), {x1, x0});
     y.insert(y.begin(), {y1, y0});
     int size = x.size();
     x.push_back(2*x[size-1] - x[size-2]);
     y.push_back(2*y[size-1] - y[size-2]);
-    size += 3;
+    size = x.size();
 
-    ImageProc::PlotPath(img_env, x, y, Scalar(0,0,255), 2);
+
+    // ImageProc::PlotPath(img_env, x, y, Scalar(0,0,255), 2);
 
     std::cout << "inita:" << init_a << endl;
     cout << "x[0]:" << x[2] << ", " << y[2] << endl;
@@ -292,7 +302,7 @@ std::vector<Node> HeuristicRRT::PostProcessing(
     double p_error = DBL_MAX;
     double error;
     std::vector<double> bspline_s, bspline_x, bspline_y, bspline_a;
-    for (int n = 0; n < 20; ++n) {
+    for (int n = 0; n < rrt_conf_.post_iteration(); ++n) {
         bspline_s.clear();
         bspline_x.clear();
         bspline_y.clear();
@@ -350,8 +360,6 @@ std::vector<Node> HeuristicRRT::PostProcessing(
                 sumy1 += 2.0 * Yd[t] * b1_dot[t];
                 sumy2 += 2.0 * Yd[t] * b2_dot[t];
                 sumy3 += 2.0 * Yd[t] * b3_dot[t];
-                //cout << " sum :" << sumx0 << ", " << sumx1 << "." << sumx2 << ", " << sumx3
-                //    << ":sumy0:" << sumy0 << ", " << sumy1 << "." << sumy2 << "," << sumy3 <<endl;
             }
             l_phi_dx[i-2] += sumx0;
             l_phi_dx[i-1] += sumx1;
@@ -371,7 +379,8 @@ std::vector<Node> HeuristicRRT::PostProcessing(
                 yk = yk > 511 ? 511 : yk;
                 yk = yk < 0 ? 0 : yk;
                 px.push_back(repulsive_row.at<double>(xk, yk));
-                py.push_back(repulsive_row.at<double>(xk, yk));
+                py.push_back(repulsive_col.at<double>(xk, yk));
+                // ImageProc::PlotPoint(img_env, Node(xk,yk), Scalar(100,100,200),1);
             }
 
             sumx0 = 0.0, sumx1 = 0.0, sumx2 = 0.0, sumx3 = 0.0;
@@ -395,40 +404,34 @@ std::vector<Node> HeuristicRRT::PostProcessing(
             p_phi_y[i]   += sumy2;
             p_phi_y[i+1] += sumy3;
 
-            double path_l = 0.0;
-            for (int t = 0; t < X.size(); ++t) {
-                bspline_x.push_back(X[i]);
-                bspline_y.push_back(Y[i]);
-                if (t != 0) {
-                    path_l += sqrt(pow(bspline_x[t]-bspline_x[t-1],2) +
-                                   pow(bspline_y[t]-bspline_y[t-1],2));
-                }
-            }
-
-            s_error = 0.0;
-            p_error = 0.0;
-            for (int t = 2; t < size-2; ++t) {
-                s_error += fabs(l_phi_dx[t]) + fabs(l_phi_dy[t]);
-                p_error += fabs(p_phi_x[t]) + fabs(p_phi_y[t]);
-            }
-            //cout << "serror:" << s_error << ", p_error:" << p_error << endl;
-            error = s_error + p_error;
-            int lambda = rrt_conf_.k_repulsive();
-            for (int t = 3; t < size-3; ++t) {
-                x[t] -= 0.01 * (1.2 * l_phi_dx[t] / 512 * 20 - lambda * p_phi_x[t]);
-                y[t] -= 0.01 * (1.2 * l_phi_dy[t] / 512 * 20- lambda * p_phi_y[t]);
-            }
-            ImageProc::PlotPath(img_env, x, y, Scalar(0,255,255),1);
         }
+
+        s_error = 0.0;
+        p_error = 0.0;
+        for (int t = 2; t < size-2; ++t) {
+            s_error += fabs(l_phi_dx[t]) + fabs(l_phi_dy[t]);
+            p_error += fabs(p_phi_x[t]) + fabs(p_phi_y[t]);
+        }
+        error = s_error + p_error;
+        double lambda = rrt_conf_.k_repulsive();
+        for (int t = 3; t < size-3; ++t) {
+            //cout << "before:" << x[t] << ", " << y[t] << endl;
+            x[t] -= 0.01 * (1.2 * l_phi_dx[t] / 512 * 20 - lambda * p_phi_x[t]);
+            y[t] -= 0.01 * (1.2 * l_phi_dy[t] / 512 * 20 - lambda * p_phi_y[t]);
+            //cout << "x: " << x[t] << "y:" << y[t] << " p_phi_x:" << p_phi_x[t]
+             //  << ", p_phi_y:" << p_phi_y[t] << endl;
+
+        }
+        ImageProc::PlotPath(img_env, x, y, Scalar(0,255,255),1);
     }
 
     std::vector<Node> spline_path;
-    for (int i = 0 ; i < bspline_x.size(); ++i) {
-        spline_path.push_back(Node(bspline_x[i], bspline_y[i]));
+    for (int i = 2 ; i < x.size()-3; ++i) {
+        spline_path.push_back(Node(x[i], y[i]));
     }
 
     // ImageProc::PlotPath(img_env, path, Scalar(255,0,0), 2);
-    ImageProc::PlotPath(img_env, x, y, Scalar(0,255,0), 2);
+    ImageProc::PlotPath(img_env, spline_path, Scalar(0,255,0), 2);
     imshow("path", img_env);
 
     return path;

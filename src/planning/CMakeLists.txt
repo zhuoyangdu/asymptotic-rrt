@@ -38,11 +38,9 @@ add_library(planning
         src/planning_node.h
         src/rrt/heuristic_rrt.cpp
         src/rrt/heuristic_rrt.h
-        src/rrt/tree.cpp
-        src/rrt/tree.h
         src/rrt/node.h
         src/rrt/probablistic_map.cpp
-        src/rrt/probablistic_map.h 
+        src/rrt/probablistic_map.h
         src/common/image_proc.cpp
         src/common/environment.cpp
 )

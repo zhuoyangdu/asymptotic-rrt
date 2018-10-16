@@ -30,6 +30,10 @@ Environment::Environment(const cv::Mat& image,
     ImageProc::GetObstacleRepulsiveField(map_static_,
                                          &repulsive_filed_x_,
                                          &repulsive_filed_y_);
+
+    Mat element = cv::getStructuringElement(MORPH_RECT, Size(10, 10));
+    erode(map_static_, dilate_map_, element);
+
 }
 
 void Environment::InitParams() {
@@ -82,7 +86,7 @@ void Environment::GenerateAttractiveProbMap() {
 }
 
 bool Environment::CheckCollisionByPixelCoord(double row, double col) const {
-    int value = static_cast<int>(map_dynamic_.at<uchar>(static_cast<int>(row),
+    int value = static_cast<int>(dilate_map_.at<uchar>(static_cast<int>(row),
                                                         static_cast<int>(col)));
     if (value == 0) {
         // Is collided.
