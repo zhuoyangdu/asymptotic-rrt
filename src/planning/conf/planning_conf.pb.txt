@@ -9,6 +9,8 @@ rrt_conf {
     turn_on_prior: true
     k_repulsive: 0.4
     post_iteration: 200
+    record: true
+    record_path: "/media/psf/Home/Documents/MATLAB/workspace/rrt-vis/data/"
 }
 vrep_conf {
     resolutionX : 512

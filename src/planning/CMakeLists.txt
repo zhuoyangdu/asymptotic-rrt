@@ -47,6 +47,7 @@ add_library(planning
 
 target_link_libraries(planning
         ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES}
 )
 
 add_executable(planning_node

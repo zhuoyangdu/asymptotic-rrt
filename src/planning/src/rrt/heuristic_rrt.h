@@ -71,6 +71,8 @@ class HeuristicRRT {
     std::vector<Node> PostProcessing(const std::vector<Node>& path,
                                      const Environment* env);
 
+    void Record(const std::vector<Node>& tree);
+     
     ros::NodeHandle private_nh_;
     ros::Publisher pub_map_;
 

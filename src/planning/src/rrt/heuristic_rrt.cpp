@@ -140,8 +140,10 @@ PlanningStatus HeuristicRRT::Solve(
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
     std::cout << "elapsed seconds:" << elapsed_seconds.count() << "s\n";
     if (min_path.size()!=0) {
+
         std::vector<Node> spline_path = PostProcessing(min_path, environment);
     }
+    Record(tree);
 
     if (show_image_)
         imshow("environment", img_env);
@@ -377,6 +379,40 @@ std::vector<Node> HeuristicRRT::PostProcessing(
     // imshow("path", img_env);
 
     return path;
+}
+
+
+string int2string(int value)
+{
+    stringstream ss;
+    ss<<value;
+    return ss.str();
+}
+
+void HeuristicRRT::Record(const std::vector<Node>& tree) {
+    time_t t = std::time(0);
+    struct tm * now = std::localtime( & t );
+    string time_s;
+    //the name of bag file is better to be determined by the system time
+    time_s = int2string(now->tm_year + 1900)+
+          '-'+int2string(now->tm_mon + 1)+
+          '-'+int2string(now->tm_mday)+
+          '-'+int2string(now->tm_hour)+
+          '-'+int2string(now->tm_min)+
+          '-'+int2string(now->tm_sec);
+
+    std::string file_name = rrt_conf_.record_path() 
+                            + "/tree-" + time_s + ".txt";
+    std::ofstream out_file(file_name_.c_str());
+    if (!out_file) {
+        ROS_INFO("no file!");
+    }
+    for (Node node : tree) {
+        out_file >> node.index() >> "\t" >> node.row()
+            >> "\t" >> node.col() >> "\t" >> node.parent_index()
+            >> "\n";
+    }
+    out_file.close();
 }
 
 }  // namespace planning

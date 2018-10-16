@@ -12,6 +12,8 @@ message RRTConf {
     optional bool turn_on_prior = 7;
     optional double k_repulsive = 8;
     optional int32 post_iteration = 9;
+    optional bool record = 10;
+    optional string record_path = 11;
 }
 
 message VrepConf {
