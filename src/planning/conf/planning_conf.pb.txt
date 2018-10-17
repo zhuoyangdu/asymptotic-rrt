@@ -1,16 +1,17 @@
 use_sim_time : true
 rrt_conf {
-    show_image : false
+    show_image : true
     time_step : 0.5
     k_voronoi : 1.0
     k_goal : 5.0
-    max_attemp: 1000
+    max_attemp: 3000
     step_size: 15
-    turn_on_prior: true
+    turn_on_prior: false
     k_repulsive: 0.4
     post_iteration: 200
     record: true
-    record_path: "/media/psf/Home/Documents/MATLAB/workspace/rrt-vis/data/"
+    record_path: "/home/jia/du/origin_data/"
+    uniform_sample: true
 }
 vrep_conf {
     resolutionX : 512
@@ -21,11 +22,11 @@ vrep_conf {
     maxY : 10.0
 }
 goal {
-    row: 480
-    col: 470
+    row: 300
+    col: 20
 }
 map_from_file : true
-map_path : "/resources/map/map.bmp"
+map_path : "/resources/map/map4.bmp"
 fake_state {
     x: -8.0
     y: 7.5

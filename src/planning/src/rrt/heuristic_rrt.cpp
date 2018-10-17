@@ -5,6 +5,8 @@
 #include <functional>
 #include <chrono>
 #include "float.h"
+#include <fstream>
+
 using namespace std;
 
 namespace planning {
@@ -21,6 +23,7 @@ PlanningStatus HeuristicRRT::Solve(
     const geometry_msgs::Pose2D& vehicle_state,
     Environment* environment) {
 
+    srand(time(0));
     // Get init state.
     cv::Point2d init;
     environment->GetPixelCoord(vehicle_state.x, vehicle_state.y,
@@ -56,19 +59,19 @@ PlanningStatus HeuristicRRT::Solve(
     auto start = std::chrono::system_clock::now();
     int i = 0;
     while (i < rrt_conf_.max_attemp()) {
-        i++;
-        if ( i % 200 == 0) {
-            // std::cout << "iteration " << i << " times." << std::endl;
-            i ++;
+        if ( i % 100 == 0) {
+            std::cout << "iteration " << i << " times."
+                " shortest_path_length:" << shortest_path_length_/512*20
+                << ", spline: " << shortest_spath_length_/512*20 << std::endl;
         }
 
         // Heuristic sample.
-        auto t1 = std::chrono::system_clock::now();
-        Node sample = probablistic_map.Sampling();
-        auto t2 = std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed_seconds = t2 - t1;
-        std::cout << "Sampling elapsed seconds:" << elapsed_seconds.count() << "s\n";
-
+        Node sample;
+        if (rrt_conf_.uniform_sample()) {
+            sample = UniformSample(environment);
+        } else {
+            sample = probablistic_map.Sampling();
+        }
         // Path prior.
         bool turn_on_prior = rrt_conf_.turn_on_prior();
             if (turn_on_prior) {
@@ -80,25 +83,16 @@ PlanningStatus HeuristicRRT::Solve(
         }
 
         // Find parent node.
-        t1 = std::chrono::system_clock::now();
         Node nearest_node;
         if (!GetNearestNode(sample, tree, &nearest_node)) {
             continue;
         }
-        t2 = std::chrono::system_clock::now();
-        elapsed_seconds = t2 - t1;
-        std::cout << "GetNearestNode elapsed seconds:" << elapsed_seconds.count() << "s\n";
-
 
         // Steer.
         Node new_node;
-        t1 = std::chrono::system_clock::now();
         if (! Steer(sample, nearest_node, &new_node)) {
             continue;
         }
-        t2 = std::chrono::system_clock::now();
-        elapsed_seconds = t2 - t1;
-        std::cout << "Steer elapsed seconds:" << elapsed_seconds.count() << "s\n";
 
         // ImageProc::PlotPoint(img_env, new_node, Scalar(0, 200, 255), 3);
         // Check collision.
@@ -108,6 +102,7 @@ PlanningStatus HeuristicRRT::Solve(
             continue;
         }
         // Add to tree.
+        i++;
         new_node.SetIndex(tree.size());
         new_node.SetParent(nearest_node.index());
         tree.push_back(new_node);
@@ -131,6 +126,8 @@ PlanningStatus HeuristicRRT::Solve(
                     //    << ", parent:" << node.parent_index() << std::endl;
                 }
                 shortest_path_length_ = path_length;
+                vector<Node> spath = PostProcessing(path, environment);
+                shortest_spath_length_ = PathLength(spath);
                 min_path = path;
             }
         }
@@ -140,14 +137,27 @@ PlanningStatus HeuristicRRT::Solve(
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
     std::cout << "elapsed seconds:" << elapsed_seconds.count() << "s\n";
     if (min_path.size()!=0) {
-
         std::vector<Node> spline_path = PostProcessing(min_path, environment);
+        Record(tree, spline_path, min_path);
+        ImageProc::PlotPath(img_env, spline_path, Scalar(0,0,255),2);
+        ImageProc::PlotPath(img_env, min_path, Scalar(0,255,0),2);
+        imshow("path", img_env);
     }
-    Record(tree, spline_path, min_path);
 
     if (show_image_)
         imshow("environment", img_env);
     return PlanningStatus::OK();
+}
+
+Node HeuristicRRT::UniformSample(const Environment* environment) {
+    // srand(time(0));
+    int rand_row = int((double) rand() / RAND_MAX * 511);
+    int rand_col = int((double) rand() / RAND_MAX * 511);
+    if (environment->CheckCollisionByPixelCoord(rand_row, rand_col)) {
+        return UniformSample(environment);
+    } else {
+        return Node(rand_row, rand_col);
+    }
 }
 
 PlanningStatus HeuristicRRT::GetGridMap(
@@ -374,11 +384,7 @@ std::vector<Node> HeuristicRRT::PostProcessing(
         spline_path.push_back(Node(x[i], y[i]));
     }
 
-    // ImageProc::PlotPath(img_env, path, Scalar(255,0,0), 2);
-    // ImageProc::PlotPath(img_env, spline_path, Scalar(0,255,0), 2);
-    // imshow("path", img_env);
-
-    return path;
+    return spline_path;
 }
 
 
@@ -410,27 +416,29 @@ void HeuristicRRT::Record(const std::vector<Node>& tree,
         ROS_INFO("no file!");
     }
     for (Node node : tree) {
-        out_file >> node.index() >> "\t" >> node.row()
-            >> "\t" >> node.col() >> "\t" >> node.parent_index()
-            >> "\n";
+        out_file << node.index() << "\t" << node.row()
+            << "\t" << node.col() << "\t" << node.parent_index()
+            << "\n";
     }
     out_file.close();
 
-    file_name = rrt_conf_.record_path() 
+    file_name = rrt_conf_.record_path()
                 + "/path-" + time_s + ".txt";
     std::ofstream out_path_file(file_name.c_str());
     for (Node node : path) {
-        out_path_file >> node.row() >> "\t" >> node.col() >> "\n";
+        out_path_file << node.row() << "\t" << node.col() << "\n";
     }
     out_path_file.close();
 
-    file_name = rrt_conf_.record_path() 
-                + "/splinepath-" + time_s + ".txt";
-    std::ofstream out_spath_file(file_name.c_str());
-    for (Node node : path) {
-        out_spath_file >> node.row() >> "\t" >> node.col() >> "\n";
+    if (!rrt_conf_.uniform_sample()) {
+        file_name = rrt_conf_.record_path()
+                    + "/splinepath-" + time_s + ".txt";
+        std::ofstream out_spath_file(file_name.c_str());
+        for (Node node : spline_path) {
+            out_spath_file << node.row() << "\t" << node.col() << "\n";
+        }
+        out_spath_file.close();
     }
-    out_spath_file.close();
-}
 
+}
 }  // namespace planning

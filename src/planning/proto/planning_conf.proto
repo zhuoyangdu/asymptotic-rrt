@@ -14,6 +14,7 @@ message RRTConf {
     optional int32 post_iteration = 9;
     optional bool record = 10;
     optional string record_path = 11;
+    optional bool uniform_sample = 12;
 }
 
 message VrepConf {

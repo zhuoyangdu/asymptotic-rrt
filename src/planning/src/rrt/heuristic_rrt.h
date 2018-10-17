@@ -70,8 +70,10 @@ class HeuristicRRT {
                                      const Environment* env);
 
     void Record(const std::vector<Node>& tree,
+                const std::vector<Node>& spline_path,
                 const std::vector<Node>& path);
 
+    Node UniformSample(const Environment* environment);
 
     ros::NodeHandle private_nh_;
     ros::Publisher pub_map_;
@@ -81,6 +83,7 @@ class HeuristicRRT {
     RRTConf rrt_conf_;
     bool show_image_ = false;
     double shortest_path_length_ = 0;
+    double shortest_spath_length_ = 0;
     std::vector<Node> min_path;
 };
 

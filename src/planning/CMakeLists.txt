@@ -3,6 +3,8 @@ project(planning)
 
 add_definitions(-std=c++11)
 
+set(CMAKE_C_FLAGS "-O2 ")
+
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     rospy
