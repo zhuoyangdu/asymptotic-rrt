@@ -24,5 +24,7 @@ int main(int argc, char** argv) {
     ros::NodeHandle nh;
     planning::PlanningNode planning_node(nh);
     planning_node.Run();
+    ros::shutdown();
+    cv::destroyAllWindows();
     return 0;
 }

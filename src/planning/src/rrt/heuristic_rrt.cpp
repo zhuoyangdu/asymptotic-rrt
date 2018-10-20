@@ -57,6 +57,11 @@ PlanningStatus HeuristicRRT::Solve(
     std::cout << "goal pixel:" << goal_node.row() << ", " << goal_node.col() << std::endl;
 
     auto start = std::chrono::system_clock::now();
+    double t_sample = 0.0;
+    double t_nearest = 0.0;
+    double t_steer = 0.0;
+    double t_collision = 0.0;
+
     int i = 0;
     while (i < rrt_conf_.max_attemp()) {
         if ( i % 100 == 0) {
@@ -66,12 +71,17 @@ PlanningStatus HeuristicRRT::Solve(
         }
 
         // Heuristic sample.
+        auto t1 = std::chrono::system_clock::now();
         Node sample;
         if (rrt_conf_.uniform_sample()) {
             sample = UniformSample(environment);
         } else {
             sample = probablistic_map.Sampling();
         }
+        std::chrono::duration<double> elapsed_seconds = 
+                std::chrono::system_clock::now() - t1;
+        t_sample += elapsed_seconds.count();
+
         // Path prior.
         bool turn_on_prior = rrt_conf_.turn_on_prior();
             if (turn_on_prior) {
@@ -82,25 +92,36 @@ PlanningStatus HeuristicRRT::Solve(
             }
         }
 
+        t1 = std::chrono::system_clock::now();
         // Find parent node.
         Node nearest_node;
         if (!GetNearestNode(sample, tree, &nearest_node)) {
             continue;
         }
+        elapsed_seconds = std::chrono::system_clock::now() - t1;
+        t_nearest += elapsed_seconds.count();
+
 
         // Steer.
+        t1 = std::chrono::system_clock::now();
         Node new_node;
         if (! Steer(sample, nearest_node, &new_node)) {
             continue;
         }
+        elapsed_seconds = std::chrono::system_clock::now() - t1;
+        t_steer += elapsed_seconds.count();
 
-        // ImageProc::PlotPoint(img_env, new_node, Scalar(0, 200, 255), 3);
+
         // Check collision.
-
+        t1 = std::chrono::system_clock::now();
         if (CheckCollision(nearest_node, new_node, *environment)) {
             // Collide.
             continue;
         }
+        elapsed_seconds = std::chrono::system_clock::now() - t1;
+        t_collision += elapsed_seconds.count();
+
+
         // Add to tree.
         i++;
         new_node.SetIndex(tree.size());
@@ -136,12 +157,15 @@ PlanningStatus HeuristicRRT::Solve(
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::time_t end_time = std::chrono::system_clock::to_time_t(end);
     std::cout << "elapsed seconds:" << elapsed_seconds.count() << "s\n";
+    std::cout << "t_sample:" << t_sample << ", t_nearest:" << t_nearest << ", t_steer: " 
+            << t_steer << ", t_collision:" << t_collision << endl;
     if (min_path.size()!=0) {
         std::vector<Node> spline_path = PostProcessing(min_path, environment);
         Record(tree, spline_path, min_path);
-        ImageProc::PlotPath(img_env, spline_path, Scalar(0,0,255),2);
-        ImageProc::PlotPath(img_env, min_path, Scalar(0,255,0),2);
-        imshow("path", img_env);
+        if (show_image_) {
+            ImageProc::PlotPath(img_env, spline_path, Scalar(0,0,255),2);
+            ImageProc::PlotPath(img_env, min_path, Scalar(0,255,0),2);
+        }
     }
 
     if (show_image_)

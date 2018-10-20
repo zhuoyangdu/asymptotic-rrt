@@ -1,16 +1,16 @@
 use_sim_time : true
 rrt_conf {
-    show_image : true
+    show_image : false
     time_step : 0.5
     k_voronoi : 1.0
     k_goal : 5.0
-    max_attemp: 3000
+    max_attemp: 500
     step_size: 15
     turn_on_prior: false
     k_repulsive: 0.4
     post_iteration: 200
     record: true
-    record_path: "/home/jia/du/origin_data/"
+    record_path: "/home/zy/du/origin_data/1017/"
     uniform_sample: true
 }
 vrep_conf {

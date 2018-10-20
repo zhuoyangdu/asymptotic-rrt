@@ -84,14 +84,18 @@ void PlanningNode::InitEnv() {
 }
 
 void PlanningNode::Run() {
-    ROS_INFO("[PlanningNode] Planning node begins!");
-    ros::Rate loop_rate(rate_);
-    while (ros::ok()) {
-        ros::spinOnce();
+    if (!planning_conf_.map_from_file()) {
+        ROS_INFO("[PlanningNode] Planning node begins!");
+        ros::Rate loop_rate(rate_);
+        while (ros::ok()) {
+            ros::spinOnce();
+            RunOnce();
+            cv::waitKey(1);
+            // ros::spin();
+            loop_rate.sleep();
+        }
+    } else {
         RunOnce();
-        cv::waitKey(0);
-        ros::spin();
-        loop_rate.sleep();
     }
 }
 
