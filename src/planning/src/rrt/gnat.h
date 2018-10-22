@@ -1,10 +1,9 @@
-//
-//  main.cpp
-//  knn
-//
 //  Created by zhuoyang on 2018/10/22.
 //  Copyright © 2018年 zhuoyang. All rights reserved.
 //
+
+#ifndef SRC_PLANNING_SRC_RRT_GNAT_H_
+#define SRC_PLANNING_SRC_RRT_GNAT_H_
 
 #include <iostream>
 #include <vector>
@@ -15,18 +14,31 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "node.h"
 
 using namespace std;
 using namespace cv;
 
+namespace planning {
+
 class GNAT {
 
 public:
-    GNAT(const std::vector<std::pair<int, int>>& pivots, const cv::Size& size) :
-            pivots_(pivots), size_(size) {
+    GNAT(int pivots_k, const cv::Size& size) :
+        size_(size) {
+        
+        vector<int> px = linspace(pivots_k);
+        vector<int> py = px;
+        pivots_.clear();
+        for (int i = 0; i < px.size(); ++i) {
+            for (int j = 0; j < py.size(); ++j) {
+                pivots_.push_back(pair<int,int>(px[i], py[j]));
+            }
+        }
+
         cv::Rect rect(0, 0, size_.width, size_.height);
         cv::Subdiv2D subdiv(rect);
-        for (pair<int, int> point : pivots) {
+        for (pair<int, int> point : pivots_) {
             subdiv.insert(cv::Point(point.first, point.second));
         }
 
@@ -63,6 +75,17 @@ public:
             points_.push_back({});
         }
     }
+    
+    vector<int> linspace(int num) {
+        vector<int> lins;
+        int dist = 512/num/2;
+    
+        while (dist < 512) {
+            lins.push_back(dist);
+            dist += 512/num;
+        }
+        return lins;
+    }   
     
     void GetRange(int pivot, int region, int* min, int* max) {
         if (pivot == region) {
@@ -120,8 +143,10 @@ public:
     struct Compare {
         Compare(cv::Point sample) {this->sample = sample;}
         bool operator() (cv::Point& a, cv::Point& b) {
-            int dist1 = (a.x - sample.x) * (a.x - sample.x) + (a.y - sample.y) * (a.y - sample.y);
-            int dist2 = (b.x - sample.x) * (b.x - sample.x) + (b.y - sample.y) * (b.y - sample.y);
+            int dist1 = (a.x - sample.x) * (a.x - sample.x) + 
+                        (a.y - sample.y) * (a.y - sample.y);
+            int dist2 = (b.x - sample.x) * (b.x - sample.x) + 
+                        (b.y - sample.y) * (b.y - sample.y);
             return dist1 < dist2;
         }
         cv::Point sample;
@@ -163,19 +188,15 @@ public:
             }
             int max, min;
             GetRange(pivot_index, i, &min, &max);
-            //cout << "min:" << sqrt(min) << ", d1+t:" << d1 + threshold << endl;
             if (sqrt(min) > d1 + threshold) {
                 continue;
             } else {
                 for (cv::Point point : points_[i]) {
-                    //cout << "p:" << sqrt(SqureDistance(point, sample)) << "," << threshold << endl;
                     if (sqrt(SqureDistance(point, sample)) < threshold) {
                         candidates.push(point);
                         if (candidates.size() > k) {
-                            //cout << "pop:" << candidates.top().x << "," << candidates.top().y << endl;
                             candidates.pop();
                         }
-                        //cout << "top:" << candidates.top().x << "," << candidates.top().y << endl;
                         threshold = sqrt(SqureDistance(candidates.top(), sample));
                     }
                 }
@@ -203,105 +224,9 @@ private:
     
 };
 
-void PlotPoint(const cv::Mat& image,
-                          const Point& point,
-                          const cv::Scalar& scalar,
-                          double thickness) {
-    circle(image, point, thickness, scalar, CV_FILLED, CV_AA, 0);
-}
 
 
 
-void Test(const vector<int>& vx, const vector<int>& vy) {
-    cv::Mat image_gray = cv::Mat::ones(512, 512, CV_8U)*255;
-    cv::Mat image;
-    cvtColor(image_gray, image, COLOR_GRAY2BGR);
+} // namespace
 
-    vector<pair<int, int>> pivots;
-    for (int row : vx) {
-        for (int col : vy) {
-            pivots.push_back(pair<int, int>(row, col));
-        }
-    }
-    GNAT gnat(pivots, cv::Size(image.rows, image.cols));
-    /*
-    vector<vector<Point2f>> facets = gnat.Voronoi();
-    for (int i = 0; i < pivots.size(); ++i) {
-        cv::Point p(pivots[i].first, pivots[i].second);
-        PlotPoint(image, p, gnat.color(i), 5);
-        for (int j = 0; j < facets[i].size()-1;++j) {
-            line(image, facets[i][j], facets[i][j+1], gnat.color(i), 1);
-        }
-    }
-     */
-    auto t1 = std::chrono::system_clock::now();
-    for (int i = 0; i < 5000; ++i) {
-        int random_x = int((double)rand()/RAND_MAX * 511);
-        int random_y = int((double)rand()/RAND_MAX * 511);
-        cv::Point rand_p(random_x, random_y);
-        vector<Point> k_nearest = gnat.kNearestPoints(rand_p, 5);
-        int pivot_index = gnat.add(rand_p);
-       // PlotPoint(image, rand_p, gnat.color(pivot_index), 1);
-    }
-    //PlotPoint(image, rand_p, cv::Scalar(0,0,255), 5);
-    //for (Point p : k_nearest) {
-    //    PlotPoint(image, p, cv::Scalar(255,0,0), 5);
-    //}
-    std::chrono::duration<double> elapse = std::chrono::system_clock::now() - t1;
-    cout << "knn:" << elapse.count() << endl;
-    
-    struct Compare2 {
-        Compare2(cv::Point sample) {this->sample = sample;}
-        bool operator() (cv::Point& a, cv::Point& b) {
-            int dist1 = (a.x - sample.x) * (a.x - sample.x) + (a.y - sample.y) * (a.y - sample.y);
-            int dist2 = (b.x - sample.x) * (b.x - sample.x) + (b.y - sample.y) * (b.y - sample.y);
-            return dist1 > dist2;
-        }
-        cv::Point sample;
-    };
-    
-    t1 = std::chrono::system_clock::now();
-    vector<cv::Point> all_points;
-    for (int i = 0; i < 5000; ++i) {
-        int random_x = int((double)rand()/RAND_MAX * 511);
-        int random_y = int((double)rand()/RAND_MAX * 511);
-        cv::Point rand_p(random_x, random_y);
-        Compare2 cmp(rand_p);
-        vector<cv::Point> candidates;
-        std::priority_queue<cv::Point, vector<cv::Point>, decltype(cmp)> sort_points(cmp);
-        vector<cv::Point> k_nearest1;
-        for (cv::Point point : all_points) {
-            sort_points.push(point);
-        }
-        all_points.push_back(rand_p);
-    }
-    elapse = std::chrono::system_clock::now() - t1;
-    cout << "ori:" << elapse.count() << endl;
-}
-
-vector<int> linspace(int num) {
-    vector<int> lins;
-    int dist = 512/num/2;
-    
-    while (dist < 512) {
-        lins.push_back(dist);
-        dist += 512/num;
-    }
-    return lins;
-}
-
-int main(int argc, const char * argv[]) {
-    srand(time(0));
-    vector<int> vx = {85, 256, 426};
-    vector<int> vy = {85, 256, 426};
-    
-    
-    for (int i = 3; i <= 6; ++i) {
-        cout << "num:" << i << endl;
-        vector<int> split = linspace(i);
-        Test(split, split);
-    }
-    
-    cv::waitKey();
-    return 0;
-}
+#endif // SRC_PLANNING_SRC_RRT_GNAT_H_
