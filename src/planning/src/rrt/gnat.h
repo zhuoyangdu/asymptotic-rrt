@@ -72,7 +72,7 @@ public:
         }
         
         for (int i = 0; i < pivots_.size(); ++i) {
-            points_.push_back({});
+            nodes_.push_back({});
         }
     }
     
@@ -95,19 +95,19 @@ public:
         *max = distance_range_table_[pivot][region].second;
     }
     
-    int add(const cv::Point& point) {
+    int add(const Node& node) {
         int min_pivots = -1;
         int min_dist = INT_MAX;
         for (int i = 0; i < pivots_.size(); ++i) {
             pair<int, int> pivot = pivots_[i];
-            int dist = (point.x - pivot.first)*(point.x - pivot.first) +
-                       (point.y - pivot.second)*(point.y - pivot.second);
+            int dist = (node.row() - pivot.first)*(node.row() - pivot.first) +
+            (node.col() - pivot.second)*(node.col() - pivot.second);
             if (dist < min_dist) {
                 min_dist = dist;
                 min_pivots = i;
             }
         }
-        points_[min_pivots].push_back(point);
+        nodes_[min_pivots].push_back(node);
         point_count_++;
         return min_pivots;
     }
@@ -120,17 +120,13 @@ public:
         return colors_[i];
     }
     
-    vector<cv::Point> GetPointsInRegion(int i) {
-        return points_[i];
-    }
-    
-    int FindPivot(const cv::Point& point) {
+    int FindPivot(const Node& node) {
         int min_pivots = -1;
         int min_dist = INT_MAX;
         for (int i = 0; i < pivots_.size(); ++i) {
             pair<int, int> pivot = pivots_[i];
-            int dist = (point.x - pivot.first)*(point.x - pivot.first) +
-            (point.y - pivot.second)*(point.y - pivot.second);
+            int dist = (node.row() - pivot.first)*(node.row() - pivot.first) +
+            (node.col() - pivot.second)*(node.col() - pivot.second);
             if (dist < min_dist) {
                 min_dist = dist;
                 min_pivots = i;
@@ -141,32 +137,38 @@ public:
     }
     
     struct Compare {
-        Compare(cv::Point sample) {this->sample = sample;}
-        bool operator() (cv::Point& a, cv::Point& b) {
-            int dist1 = (a.x - sample.x) * (a.x - sample.x) + 
-                        (a.y - sample.y) * (a.y - sample.y);
-            int dist2 = (b.x - sample.x) * (b.x - sample.x) + 
-                        (b.y - sample.y) * (b.y - sample.y);
+        Compare(Node sample) {this->sample = sample;}
+        bool operator() (Node& a, Node& b) {
+            int dist1 = (a.row() - sample.row()) * (a.row() - sample.row())  +
+                        (a.col() - sample.col()) * (a.col() - sample.col()) ;
+            int dist2 = (b.row() - sample.row()) * (b.row() - sample.row())  +
+                        (b.col() - sample.col()) * (b.col() - sample.col()) ;
             return dist1 < dist2;
         }
-        cv::Point sample;
+        Node sample;
     };
     
-    int SqureDistance(const cv::Point& p1, const cv::Point& p2) const {
-        return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+    int SqureDistance(const Node& p1, const Node& p2) const {
+        return (p1.row() - p2.row()) * (p1.row() - p2.row()) +
+               (p1.col() - p2.col()) * (p1.col() - p2.col());
     }
     
-    vector<Point> kNearestPoints(const cv::Point& sample, int k) {
+    int SqureDistance(const cv::Point& p1, const Node& p2) const {
+        return (p1.x - p2.row()) * (p1.x - p2.row()) +
+               (p1.y - p2.col()) * (p1.y - p2.col());
+    }
+    
+    vector<Node> kNearestPoints(const Node& sample, int k) {
         int pivot_index = FindPivot(sample);
         while (point_count_ == 0) {
-            return vector<Point>{};
+            return vector<Node>{};
         }
-        while (points_[pivot_index].size() == 0) {
+        while (nodes_[pivot_index].size() == 0) {
             pivot_index = int((double)rand()/RAND_MAX * pivots_.size());
         }
         Compare cmp(sample);
-        std::priority_queue<cv::Point, vector<cv::Point>, decltype(cmp)> candidates(cmp);
-        for (cv::Point point : points_[pivot_index]) {
+        std::priority_queue<Node, vector<Node>, decltype(cmp)> candidates(cmp);
+        for (Node point : nodes_[pivot_index]) {
             candidates.push(point);
         }
         
@@ -183,7 +185,7 @@ public:
         cv::Point pivot_p(pivots_[pivot_index].first, pivots_[pivot_index].second);
         double d1 = sqrt(SqureDistance(pivot_p, sample));
         for (int i = 0; i < pivots_.size(); ++i) {
-            if (i == pivot_index || points_[i].size() == 0) {
+            if (i == pivot_index || nodes_[i].size() == 0) {
                 continue;
             }
             int max, min;
@@ -191,9 +193,9 @@ public:
             if (sqrt(min) > d1 + threshold) {
                 continue;
             } else {
-                for (cv::Point point : points_[i]) {
-                    if (sqrt(SqureDistance(point, sample)) < threshold) {
-                        candidates.push(point);
+                for (Node node : nodes_[i]) {
+                    if (sqrt(SqureDistance(node, sample)) < threshold) {
+                        candidates.push(node);
                         if (candidates.size() > k) {
                             candidates.pop();
                         }
@@ -203,7 +205,7 @@ public:
             }
         }
         
-        vector<cv::Point> k_nearest_points;
+        vector<Node> k_nearest_points;
         while (!candidates.empty()) {
             k_nearest_points.push_back(candidates.top());
             candidates.pop();
@@ -217,7 +219,7 @@ private:
     vector<vector<Point2f> > facets_;
     vector<vector<pair<int, int>>> distance_range_table_; // min, max.
     
-    vector<vector<cv::Point>> points_;
+    vector<vector<Node>> nodes_;
     vector<cv::Scalar> colors_;
     
     int point_count_ = 0;
