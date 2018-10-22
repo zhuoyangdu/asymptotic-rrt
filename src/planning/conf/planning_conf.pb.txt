@@ -12,6 +12,7 @@ rrt_conf {
     record: true
     record_path: "/home/zy/du/origin_data/1017/"
     uniform_sample: true
+    pivots_k: 5
 }
 vrep_conf {
     resolutionX : 512

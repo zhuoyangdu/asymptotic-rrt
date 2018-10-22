@@ -54,7 +54,12 @@ class HeuristicRRT {
     };
 
     bool GetNearestNode(const Node& sample,
-                        const std::vector<Node> tree,
+                        const std::vector<Node>& tree,
+                        Node* nearest_node);
+
+    bool GetNearestNode(const Node& sample,
+                        GNAT& gnat,
+                        const std::vector<Node>& tree,
                         Node* nearest_node);
 
     bool CheckCollision(const Node& a, const Node& b, const Environment& env);

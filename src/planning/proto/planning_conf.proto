@@ -15,6 +15,7 @@ message RRTConf {
     optional bool record = 10;
     optional string record_path = 11;
     optional bool uniform_sample = 12;
+    optional int32 pivots_k = 13;
 }
 
 message VrepConf {

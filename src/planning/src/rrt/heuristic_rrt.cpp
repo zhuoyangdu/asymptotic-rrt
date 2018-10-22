@@ -56,9 +56,12 @@ PlanningStatus HeuristicRRT::Solve(
     std::cout << "init pixel:" << init_node.row() << ", " << init_node.col() << std::endl;
     std::cout << "goal pixel:" << goal_node.row() << ", " << goal_node.col() << std::endl;
 
+    GNAT gnat(rrt_conf_.pivots_k(), cv::Size(512, 512));
+    gnat.add(init_node);
     auto start = std::chrono::system_clock::now();
     double t_sample = 0.0;
     double t_nearest = 0.0;
+    double t_nearest_knn = 0.0;
     double t_steer = 0.0;
     double t_collision = 0.0;
 
@@ -91,7 +94,7 @@ PlanningStatus HeuristicRRT::Solve(
                 continue;
             }
         }
-
+        /*
         t1 = std::chrono::system_clock::now();
         // Find parent node.
         Node nearest_node;
@@ -101,6 +104,18 @@ PlanningStatus HeuristicRRT::Solve(
         elapsed_seconds = std::chrono::system_clock::now() - t1;
         t_nearest += elapsed_seconds.count();
 
+        */
+        t1 = std::chrono::system_clock::now();
+        // Find parent node.
+        Node nearest_node;
+        if(!GetNearestNode(sample, gnat, tree, &nearest_node)) {
+            continue;
+        }
+        elapsed_seconds = std::chrono::system_clock::now() - t1;
+        t_nearest_knn += elapsed_seconds.count();
+
+        //cout << "nearest:" << nearest_node.row() << "," << nearest_node.col() << endl;
+        //cout << "k_nearest:" << k_nearest.row() << "," << k_nearest.col() << endl;
 
         // Steer.
         t1 = std::chrono::system_clock::now();
@@ -127,6 +142,7 @@ PlanningStatus HeuristicRRT::Solve(
         new_node.SetIndex(tree.size());
         new_node.SetParent(nearest_node.index());
         tree.push_back(new_node);
+        gnat.add(new_node);
         if (show_image_) {
             ImageProc::PlotLine(img_env, new_node, nearest_node,
                                 Scalar(0,255,0), 1);
@@ -159,6 +175,9 @@ PlanningStatus HeuristicRRT::Solve(
     std::cout << "elapsed seconds:" << elapsed_seconds.count() << "s\n";
     std::cout << "t_sample:" << t_sample << ", t_nearest:" << t_nearest << ", t_steer: " 
             << t_steer << ", t_collision:" << t_collision << endl;
+
+    std::cout << "t_knn:" << t_nearest_knn << std::endl;
+
     if (min_path.size()!=0) {
         std::vector<Node> spline_path = PostProcessing(min_path, environment);
         Record(tree, spline_path, min_path);
@@ -192,7 +211,40 @@ PlanningStatus HeuristicRRT::GetGridMap(
 
 bool HeuristicRRT::GetNearestNode(
         const Node& sample,
-        const std::vector<Node> tree,
+        GNAT& gnat,
+        const std::vector<Node>& tree,
+        Node* nearest_node) {
+
+    vector<Node> k_nearest = gnat.kNearestPoints(sample, 5);
+    bool success = false;
+    double dtheta = 0.0;
+    for (int i = k_nearest.size()-1; i >= 0; --i) {
+        Node tmp = k_nearest[i];
+        Node parent_tmp;
+        if (tmp.parent_index() != -1) {
+            parent_tmp = tree[tmp.parent_index()];
+            dtheta = Node::GetDeltaTheta(parent_tmp, tmp, sample);
+            if (dtheta < M_PI / 3) {
+                continue;
+            } else {
+                *nearest_node = tmp;
+                success = true;
+                break;
+            }
+        } else {
+            *nearest_node = tmp;
+            success = true;
+            break;
+        }
+
+    }
+    return success;
+}
+
+
+bool HeuristicRRT::GetNearestNode(
+        const Node& sample,
+        const std::vector<Node>& tree,
         Node* nearest_node) {
 
     Compare cmp(sample);
