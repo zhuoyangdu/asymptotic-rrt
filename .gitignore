@@ -6,3 +6,4 @@ build
 devel
 src/planning/venv/
 *DS_Store
+build
