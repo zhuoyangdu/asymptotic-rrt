@@ -22,47 +22,47 @@ namespace planning {
     planning_conf_(planning_conf) {
         show_image_ = rrt_conf_.show_image();
     }
-    
+
     PlanningStatus HeuristicRRT::Solve(const VehicleState& vehicle_state,
                                        Environment* environment) {
-        
+
         srand(time(0));
         // Get init state.
         cv::Point2d init;
         environment->GetPixelCoord(vehicle_state.x, vehicle_state.y,
                                    &init.y, &init.x);
-        
+
         cv::Mat img_env;
         cvtColor(environment->DynamicMap(), img_env, COLOR_GRAY2BGR);
         ImageProc::PlotPoint(img_env, init, Scalar(0, 100, 0), 2);
-        
+
         // Get sampling probablistic map.
         cv::Mat goal_prob       = environment->TargetAttractiveMap();
         cv::Mat voronoi_prob    = environment->VoronoiAttractiveMap();
         cv::Mat attractive_prob = environment->AttractiveMap();
-        
+
         ProbablisticMap probablistic_map(attractive_prob);
-        
+
         Node init_node(int(init.x), int(init.y), vehicle_state.theta);
         init_node.SetIndex(0);
         init_node.SetParent(-1);
-        
+
         std::vector<Node> tree = {init_node};
-        
+
         Node goal_node = environment->Goal();
         std::cout << "init:" << vehicle_state.x << "," << vehicle_state.y << std::endl;
         std::cout << "init pixel:" << init_node.row() << ", " << init_node.col() << std::endl;
         std::cout << "goal pixel:" << goal_node.row() << ", " << goal_node.col() << std::endl;
-        
+
         GNAT gnat(rrt_conf_.pivots_k(), cv::Size(512,512));
         gnat.add(init_node);
-        
+
         auto start = std::chrono::system_clock::now();
         double t_sample = 0.0;
         double t_nearest = 0.0;
         double t_steer = 0.0;
         double t_collision = 0.0;
-        
+
         int i = 0;
         while (i <= rrt_conf_.max_attemp()) {
             if ( i % 100 == 0) {
@@ -70,7 +70,7 @@ namespace planning {
                 " shortest_path_length:" << shortest_path_length_/512*20
                 << ", spline: " << shortest_spath_length_/512*20 << std::endl;
             }
-            
+
             // Heuristic sample.
             auto t1 = std::chrono::system_clock::now();
             Node sample;
@@ -82,7 +82,7 @@ namespace planning {
             std::chrono::duration<double> elapsed_seconds =
             std::chrono::system_clock::now() - t1;
             t_sample += elapsed_seconds.count();
-            
+
             // Path prior.
             bool turn_on_prior = rrt_conf_.turn_on_prior();
             if (turn_on_prior) {
@@ -92,7 +92,7 @@ namespace planning {
                     continue;
                 }
             }
-            
+
             t1 = std::chrono::system_clock::now();
             // Find parent node.
             Node nearest_node;
@@ -101,8 +101,8 @@ namespace planning {
             }
             elapsed_seconds = std::chrono::system_clock::now() - t1;
             t_nearest += elapsed_seconds.count();
-            
-            
+
+
             // Steer.
             t1 = std::chrono::system_clock::now();
             Node new_node;
@@ -111,8 +111,8 @@ namespace planning {
             }
             elapsed_seconds = std::chrono::system_clock::now() - t1;
             t_steer += elapsed_seconds.count();
-            
-            
+
+
             // Check collision.
             t1 = std::chrono::system_clock::now();
             if (CheckCollision(nearest_node, new_node, *environment)) {
@@ -121,8 +121,8 @@ namespace planning {
             }
             elapsed_seconds = std::chrono::system_clock::now() - t1;
             t_collision += elapsed_seconds.count();
-            
-            
+
+
             // Add to tree.
             i++;
             new_node.SetIndex(tree.size());
@@ -154,6 +154,7 @@ namespace planning {
         std::cout << "elapsed seconds:" << elapsed_seconds.count() << "s\n";
         std::cout << "t_sample:" << t_sample << ", t_nearest:" << t_nearest << ", t_steer: "
         << t_steer << ", t_collision:" << t_collision << endl;
+        cout << "t2:" << nearest_time2_ << ", t1:" <<nearest_time1_ << endl;
         if (min_path.size()!=0) {
             std::vector<Node> spline_path = PostProcessing(min_path, environment);
             Record(tree, spline_path, min_path);
@@ -162,13 +163,13 @@ namespace planning {
                 ImageProc::PlotPath(img_env, min_path, Scalar(0,255,0),2);
             }
         }
-        
+
         if (show_image_)
             imshow("environment", img_env);
             cv::waitKey(0);
         return PlanningStatus::OK();
     }
-    
+
     Node HeuristicRRT::UniformSample(const Environment* environment) {
         // srand(time(0));
         int rand_row = int((double) rand() / RAND_MAX * 511);
@@ -179,13 +180,26 @@ namespace planning {
             return Node(rand_row, rand_col);
         }
     }
-    
+
     bool HeuristicRRT::GetNearestNode(const Node& sample,
                                       GNAT& gnat,
                                       const std::vector<Node> tree,
                                       Node* nearest_node) {
-        
+        //auto t1 = std::chrono::system_clock::now();
         vector<Node> k_nearest = gnat.kNearestPoints(sample, 5);
+        //auto t2 = std::chrono::system_clock::now();
+        //Node test = gnat.NearestPoint(sample);
+        //auto t3 = std::chrono::system_clock::now();
+        //nearest_time1_ += std::chrono::duration<double>(t2 - t1).count();
+        //nearest_time2_ += std::chrono::duration<double>(t3 - t2).count();
+        //cout << "t2:" << std::chrono::duration<double>(t3 - t2).count()
+        //    << ", t1:" <<std::chrono::duration<double>(t2 - t1).count() << endl;
+        //cout << "origin:" << k_nearest.back().index() << "," << k_nearest.back().row()
+        //    << "," << k_nearest.back().col() << endl;
+
+        //cout << "after:" << test.index() << "," << test.row() << "," << test.col() << endl;
+
+        //std::vector<Node> k_nearest = {test};
         bool success = false;
         double dtheta = 0.0;
         for (int i = k_nearest.size()-1; i >=0; --i) {
@@ -209,7 +223,7 @@ namespace planning {
         }
         return success;
     }
-    
+
     bool HeuristicRRT::Steer(const Node& sample, const Node& nearest,
                              Node* new_node) {
         double theta = atan2(sample.row() - nearest.row(), sample.col() - nearest.col());
@@ -224,7 +238,7 @@ namespace planning {
             return false;
         }
     }
-    
+
     // If collide, return true.
     bool HeuristicRRT::CheckCollision(
                                       const planning::Node &a,
@@ -239,17 +253,17 @@ namespace planning {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     bool HeuristicRRT::CheckTarget(const Node& node, const Node& goal) {
         if (Node::SquareDistance(node, goal) < 400) {
             return true;
         }
         return false;
     }
-    
+
     vector<Node> HeuristicRRT::GetPath(const std::vector<Node>& tree,
                                        const Node& new_node) {
         std::vector<Node> path = {new_node};
@@ -260,7 +274,7 @@ namespace planning {
         }
         return path;
     }
-    
+
     double HeuristicRRT::PathLength(const std::vector<Node>& path) {
         double length = 0;
         for (int i = 0; i < path.size()-1; ++i) {
@@ -268,13 +282,13 @@ namespace planning {
         }
         return length;
     }
-    
+
     std::vector<Node> HeuristicRRT::PostProcessing(
                                                    const std::vector<Node>& path,
                                                    const Environment* env) {
         cv::Mat img_env;
         cvtColor(env->DynamicMap(), img_env, COLOR_GRAY2BGR);
-        
+
         cv::Mat repulsive_row = env->RepulsiveX();
         cv::Mat repulsive_col = env->RepulsiveY();
         std::vector<double> x;
@@ -285,7 +299,7 @@ namespace planning {
         }
         double init_a = path[0].theta();
         double y1, y0, x1, x0;
-        
+
         if (init_a <= M_PI/4 && init_a >=-M_PI/4) {
             y1 = y[0] - 40;
             y0 = (5*y[0]-y1)/4;
@@ -307,14 +321,14 @@ namespace planning {
             y1 = -2*((0.5* x[0] - 0.5*x1)/ tan(init_a) - 0.5*y[0]);
             y0 = (5*y[0]-y1)/4;
         }
-        
+
         x.insert(x.begin(), {x1, x0});
         y.insert(y.begin(), {y1, y0});
         int size = x.size();
         x.push_back(2*x[size-1] - x[size-2]);
         y.push_back(2*y[size-1] - y[size-2]);
         size = x.size();
-        
+
         for (int n = 0; n < rrt_conf_.post_iteration(); ++n) {
             std::vector<double> l_phi_dx, l_phi_dy, p_phi_x, p_phi_y;
             for (int i = 0; i < size; ++i) {
@@ -330,12 +344,12 @@ namespace planning {
                     double b1 = (3.0*pow(u,3)-6.0*pow(u,2)+4)/6.0;
                     double b2 = (-3.0*pow(u,3)+3.0*pow(u,2)+3.0*u+1.0)/6.0;
                     double b3 = pow(u,3)/6.0;
-                    
+
                     double b0_dot = -pow(1.0-u,2)/2.0;
                     double b1_dot = 1.5*pow(u,2)-2.0*u;
                     double b2_dot = -1.5*pow(u,2)+u+0.5;
                     double b3_dot = 0.5*pow(u,2);
-                    
+
                     double xd = x[i-2] * b0_dot + x[i-1] * b1_dot +
                     x[i] * b2_dot + x[i+1] * b3_dot;
                     double yd = y[i-2] * b0_dot + y[i-1] * b1_dot +
@@ -344,7 +358,7 @@ namespace planning {
                     x[i] * b2 + x[i+1] * b3;
                     double yk = y[i-2] * b0 + y[i-1] * b1 +
                     y[i] * b2 + y[i+1] * b3;
-                    
+
                     l_phi_dx[i-2] += 2.0 * xd * b0_dot;
                     l_phi_dx[i-1] += 2.0 * xd * b1_dot;
                     l_phi_dx[i]   += 2.0 * xd * b2_dot;
@@ -353,15 +367,15 @@ namespace planning {
                     l_phi_dy[i-1] += 2.0 * yd * b1_dot;
                     l_phi_dy[i]   += 2.0 * yd * b2_dot;
                     l_phi_dy[i+1] += 2.0 * yd * b3_dot;
-                    
+
                     xk = xk > 511 ? 511 : xk;
                     xk = xk < 0 ? 0 : xk;
                     yk = yk > 511 ? 511 : yk;
                     yk = yk < 0 ? 0 : yk;
-                    
+
                     double px = repulsive_row.at<double>(xk, yk);
                     double py = repulsive_col.at<double>(xk, yk);
-                    
+
                     p_phi_x[i-2] += px * b0;
                     p_phi_x[i-1] += px * b1;
                     p_phi_x[i]   += px * b2;
@@ -372,7 +386,7 @@ namespace planning {
                     p_phi_y[i+1] += py * b3;
                 }
             }
-            
+
             double s_error = 0.0;
             double p_error = 0.0;
             for (int t = 2; t < size-2; ++t) {
@@ -387,23 +401,23 @@ namespace planning {
             }
             // ImageProc::PlotPath(img_env, x, y, Scalar(0,255,255),1);
         }
-        
+
         std::vector<Node> spline_path;
         for (int i = 2 ; i < x.size()-3; ++i) {
             spline_path.push_back(Node(x[i], y[i]));
         }
-        
+
         return spline_path;
     }
-    
-    
+
+
     string int2string(int value)
     {
         stringstream ss;
         ss<<value;
         return ss.str();
     }
-    
+
     void HeuristicRRT::Record(const std::vector<Node>& tree,
                               const std::vector<Node>& spline_path,
                               const std::vector<Node>& path) {
@@ -417,7 +431,7 @@ namespace planning {
         '-'+int2string(now->tm_hour)+
         '-'+int2string(now->tm_min)+
         '-'+int2string(now->tm_sec);
-        
+
         std::string file_name = rrt_conf_.record_path()
         + "/tree-" + time_s;
         if (rrt_conf_.uniform_sample()) {
@@ -437,7 +451,7 @@ namespace planning {
             << "\n";
         }
         out_file.close();
-        
+
         file_name = rrt_conf_.record_path()
         + "/path-" + time_s + ".txt";
         std::ofstream out_path_file(file_name.c_str());
@@ -445,7 +459,7 @@ namespace planning {
             out_path_file << node.row() << "\t" << node.col() << "\n";
         }
         out_path_file.close();
-        
+
         if (!rrt_conf_.uniform_sample()) {
             file_name = rrt_conf_.record_path()
             + "/splinepath-" + time_s + ".txt";
@@ -455,8 +469,8 @@ namespace planning {
             }
             out_spath_file.close();
         }
-        
+
     }
-    
+
 }  // namespace planning
 

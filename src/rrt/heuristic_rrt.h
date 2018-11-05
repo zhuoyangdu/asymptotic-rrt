@@ -33,12 +33,12 @@ namespace planning {
 class HeuristicRRT {
 public:
     HeuristicRRT() = default;
-    
+
     explicit HeuristicRRT(const PlanningConf& planning_conf);
-    
+
     PlanningStatus Solve(const VehicleState& vehicle_state,
                          Environment* environment);
-    
+
 private:
     struct Compare {
         Compare(Node sample) {this->sample = sample;}
@@ -51,29 +51,29 @@ private:
         }
         Node sample;
     };
-    
+
     bool GetNearestNode(const Node& sample,
                         GNAT& gnat,
                         const std::vector<Node> tree,
                         Node* nearest_node);
-    
+
     bool CheckCollision(const Node& a, const Node& b, const Environment& env);
-    
+
     bool Steer(const Node& sample, const Node& nearest, Node* new_node);
-    
+
     bool CheckTarget(const Node& node, const Node& goal);
-    
+
     vector<Node> GetPath(const std::vector<Node>& tree, const Node& new_node);
-    
+
     double PathLength(const std::vector<Node>& path);
-    
+
     std::vector<Node> PostProcessing(const std::vector<Node>& path,
                                      const Environment* env);
-    
+
     void Record(const std::vector<Node>& tree,
                 const std::vector<Node>& spline_path,
                 const std::vector<Node>& path);
-    
+
     Node UniformSample(const Environment* environment);
 
     bool is_init_ = false;
@@ -83,6 +83,11 @@ private:
     double shortest_path_length_ = 0;
     double shortest_spath_length_ = 0;
     std::vector<Node> min_path;
+
+    double nearest_time1_ = 0.0;
+    double nearest_time2_ = 0.0;
+
+    std::mutex mutex_;
 };
 
 }  // namespace planning

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(planning)
-add_definitions(-std=c++11)
+add_definitions(-std=c++11 -pthread)
 
 include(FindProtobuf)
 find_package(Protobuf REQUIRED)
@@ -10,6 +10,7 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS proto/planning_conf.proto)
 add_library(planning_proto ${PROTO_HDRS} ${PROTO_SRCS})
 
 find_package(OpenCV REQUIRED)
+find_package (Threads)
 
 include_directories(
     ${OpenCV_INCLUDE_DIRS}
@@ -20,6 +21,7 @@ add_library(planning
         src/rrt/heuristic_rrt.cpp
         src/rrt/heuristic_rrt.h
         src/rrt/node.h
+        src/rrt/gnat.cpp
         src/rrt/probablistic_map.cpp
         src/rrt/probablistic_map.h
         src/common/image_proc.cpp
@@ -28,6 +30,7 @@ add_library(planning
 
 target_link_libraries(planning
         ${OpenCV_LIBRARIES}
+         ${CMAKE_THREAD_LIBS_INIT}
 )
 
 set(EXECUTABLE_OUTPUT_PATH ./bin)
@@ -39,6 +42,8 @@ target_link_libraries(planning_node
         ${OpenCV_LIBRARIES}
         planning
         planning_proto
-        ${PROTOBUF_LIBRARY})
+        ${PROTOBUF_LIBRARY}
+         ${CMAKE_THREAD_LIBS_INIT})
+
 
 
