@@ -71,61 +71,19 @@ namespace planning {
                 << ", spline: " << shortest_spath_length_/512*20 << std::endl;
             }
 
-            // Heuristic sample.
-            auto t1 = std::chrono::system_clock::now();
-            Node sample;
-            if (rrt_conf_.uniform_sample()) {
-                sample = UniformSample(environment);
-            } else {
-                sample = probablistic_map.Sampling();
-            }
-            std::chrono::duration<double> elapsed_seconds =
-            std::chrono::system_clock::now() - t1;
-            t_sample += elapsed_seconds.count();
-
-            // Path prior.
-            bool turn_on_prior = rrt_conf_.turn_on_prior();
-            if (turn_on_prior) {
-                double max_dist_sample = sqrt(Node::SquareDistance(sample, init_node))
-                + sqrt(Node::SquareDistance(sample, goal_node));
-                if (shortest_path_length_!=0 && max_dist_sample > shortest_path_length_) {
-                    continue;
-                }
-            }
-
-            t1 = std::chrono::system_clock::now();
-            // Find parent node.
-            Node nearest_node;
-            if (!GetNearestNode(sample, gnat, tree, &nearest_node)) {
-                continue;
-            }
-            elapsed_seconds = std::chrono::system_clock::now() - t1;
-            t_nearest += elapsed_seconds.count();
-
-
-            // Steer.
-            t1 = std::chrono::system_clock::now();
+            bool is_success;
             Node new_node;
-            if (! Steer(sample, nearest_node, &new_node)) {
+            Extend(init_node, probablistic_map, environment,
+                   tree, &gnat, &is_success, &new_node);
+
+            if (!is_success) {
                 continue;
             }
-            elapsed_seconds = std::chrono::system_clock::now() - t1;
-            t_steer += elapsed_seconds.count();
-
-
-            // Check collision.
-            t1 = std::chrono::system_clock::now();
-            if (CheckCollision(nearest_node, new_node, *environment)) {
-                // Collide.
-                continue;
-            }
-            elapsed_seconds = std::chrono::system_clock::now() - t1;
-            t_collision += elapsed_seconds.count();
-
 
             // Add to tree.
             i++;
             new_node.SetIndex(tree.size());
+            Node nearest_node = tree[new_node.parent_index()];
             new_node.SetParent(nearest_node.index());
             tree.push_back(new_node);
             gnat.add(new_node);
@@ -204,7 +162,7 @@ namespace planning {
         gnat.add(init_node);
 
         int i = 0;
-        int thread_nums = 1;
+        int thread_nums = 5;
         auto start = std::chrono::system_clock::now();
         while (i <= rrt_conf_.max_attemp()) {
             if ( i % 100 == 0) {
