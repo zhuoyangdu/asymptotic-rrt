@@ -63,7 +63,11 @@ namespace planning {
     }
 
     void Planner::Run() {
-        auto status = rrt_planner_->Solve(vehicle_state_, env_);
+        if (planning_conf_.multiple_thread()) {
+            auto status = rrt_planner_->SolveThread(vehicle_state_, env_);
+        } else {
+            auto status = rrt_planner_->Solve(vehicle_state_, env_);
+        }
     }
 
     void Planner::RegisterPlanner() {

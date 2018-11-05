@@ -12,12 +12,12 @@
 using namespace std;
 
 namespace planning {
-    
+
     ProbablisticMap::ProbablisticMap(const cv::Mat& attractive_prob)
     : attractive_prob_(attractive_prob){
         InitMap();
     }
-    
+
     void ProbablisticMap::InitMap() {
         vector<int> prob_vector;
         for (int i = 0; i < attractive_prob_.rows; ++i) {
@@ -25,19 +25,19 @@ namespace planning {
                 prob_vector.push_back(attractive_prob_.at<uchar>(i, j));
             }
         }
-        
+
         vector<int> prob_cumsum;
         int sum = 0;
         for (int prob : prob_vector) {
             sum += prob;
             prob_cumsum.push_back(sum);
         }
-        
+
         prob_sum_ = sum;
         prob_cumsum_ = prob_cumsum;
     }
-    
-    Node ProbablisticMap::Sampling() {
+
+    Node ProbablisticMap::Sampling() const {
         int rand_sample = int((double) rand() / RAND_MAX * prob_sum_);
         if (rand_sample <= prob_cumsum_[0]) return Node(0, 0);
         // std::cout << "rand_sample:" << rand_sample << ", sum:" << prob_sum_ << std::endl;
@@ -51,8 +51,8 @@ namespace planning {
         }
         return Node(row, col);
     }
-    
-    int ProbablisticMap::FindRandSection(int num, int lower, int upper) {
+
+    int ProbablisticMap::FindRandSection(int num, int lower, int upper) const {
         if (lower == upper) return upper;
         if (lower + 1 == upper) return upper;
         int mid = int((lower + upper) / 2);
@@ -62,6 +62,6 @@ namespace planning {
             return FindRandSection(num, mid+1, upper);
         }
     }
-    
+
 }
 

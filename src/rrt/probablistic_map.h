@@ -20,24 +20,24 @@
 #include "node.h"
 
 namespace planning {
-    
+
     class ProbablisticMap {
     public:
         explicit ProbablisticMap(const cv::Mat& attractive_prob);
-        
-        Node Sampling();
-        
+
+        Node Sampling() const;
+
     private:
         cv::Mat attractive_prob_;
         int prob_sum_;
         std::vector<int> prob_cumsum_;
-        
+
         void InitMap();
-        
-        int FindRandSection(int num, int lower, int upper);
-        
+
+        int FindRandSection(int num, int lower, int upper) const;
+
     };
-    
+
 }  // namespace planning
 
 

@@ -170,6 +170,164 @@ namespace planning {
         return PlanningStatus::OK();
     }
 
+    PlanningStatus HeuristicRRT::SolveThread(const VehicleState& vehicle_state,
+                                Environment* environment) {
+        srand(time(0));
+        // Get init state.
+        cv::Point2d init;
+        environment->GetPixelCoord(vehicle_state.x, vehicle_state.y,
+                                   &init.y, &init.x);
+
+        cv::Mat img_env;
+        cvtColor(environment->DynamicMap(), img_env, COLOR_GRAY2BGR);
+        ImageProc::PlotPoint(img_env, init, Scalar(0, 100, 0), 2);
+
+        // Get sampling probablistic map.
+        cv::Mat goal_prob       = environment->TargetAttractiveMap();
+        cv::Mat voronoi_prob    = environment->VoronoiAttractiveMap();
+        cv::Mat attractive_prob = environment->AttractiveMap();
+
+        ProbablisticMap probablistic_map(attractive_prob);
+
+        Node init_node(int(init.x), int(init.y), vehicle_state.theta);
+        init_node.SetIndex(0);
+        init_node.SetParent(-1);
+
+        std::vector<Node> tree = {init_node};
+
+        Node goal_node = environment->Goal();
+        std::cout << "init:" << vehicle_state.x << "," << vehicle_state.y << std::endl;
+        std::cout << "init pixel:" << init_node.row() << ", " << init_node.col() << std::endl;
+        std::cout << "goal pixel:" << goal_node.row() << ", " << goal_node.col() << std::endl;
+
+        GNAT gnat(rrt_conf_.pivots_k(), cv::Size(512,512));
+        gnat.add(init_node);
+
+        int i = 0;
+        int thread_nums = 1;
+        auto start = std::chrono::system_clock::now();
+        while (i <= rrt_conf_.max_attemp()) {
+            if ( i % 100 == 0) {
+                std::cout << "iteration " << i << " times."
+                " shortest_path_length:" << shortest_path_length_/512*20
+                << ", spline: " << shortest_spath_length_/512*20 << std::endl;
+            }
+
+            std::thread threads[thread_nums];
+            bool success[thread_nums];
+            Node new_nodes[thread_nums];
+            for (int t = 0; t < thread_nums; ++t) {
+                threads[t] = std::thread(&planning::HeuristicRRT::Extend, this,
+                                         init_node,
+                                         probablistic_map, environment, tree, &gnat,
+                                         &success[t], &new_nodes[t]);
+            }
+            for (std::thread& ts : threads) {
+                ts.join();
+            }
+            for (int t = 0; t < thread_nums; ++t) {
+                Node new_node = new_nodes[t];
+                new_node.SetIndex(tree.size());
+                if (success[t]) {
+                    i++;
+                    tree.push_back(new_node);
+                    gnat.add(new_node);
+                    if (show_image_) {
+                        ImageProc::PlotLine(img_env, new_node, tree[new_node.parent_index()],
+                                    Scalar(0,255,0), 1);
+                    }
+                    if (CheckTarget(new_node, environment->Goal())) {
+                    vector<Node> path = GetPath(tree, new_node);
+                    if (show_image_) {
+                        ImageProc::PlotPath(img_env, path, Scalar(0,0,255), 2);
+                    }
+                    double path_length = PathLength(path);
+                    if (shortest_path_length_==0 || shortest_path_length_ > path_length) {
+                        std::cout << "A shorter path found!" << std::endl;
+                        shortest_path_length_ = path_length;
+                        vector<Node> spath = PostProcessing(path, environment);
+                        shortest_spath_length_ = PathLength(spath);
+                        min_path = path;
+                    }
+            }
+                }
+            }
+        }
+
+        auto end = std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - start;
+        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+        std::cout << "elapsed seconds:" << elapsed_seconds.count() << "s\n";
+
+        if (min_path.size()!=0) {
+            std::vector<Node> spline_path = PostProcessing(min_path, environment);
+            Record(tree, spline_path, min_path);
+            if (show_image_) {
+                ImageProc::PlotPath(img_env, spline_path, Scalar(0,0,255),2);
+                ImageProc::PlotPath(img_env, min_path, Scalar(0,255,0),2);
+            }
+        }
+
+        if (show_image_)
+            imshow("environment", img_env);
+            cv::waitKey(0);
+        return PlanningStatus::OK();
+    }
+
+    void HeuristicRRT::Extend(
+                           const Node& init_node,
+                           const ProbablisticMap& probablistic_map,
+                           Environment* environment,
+                           const std::vector<Node>& tree,
+                           GNAT* gnat,
+                           bool* is_success,
+                           Node* new_node) {
+
+        // Heuristic sample.
+        Node sample;
+        if (rrt_conf_.uniform_sample()) {
+            sample = UniformSample(environment);
+        } else {
+            sample = probablistic_map.Sampling();
+        }
+
+        // Path prior.
+        bool turn_on_prior = rrt_conf_.turn_on_prior();
+        if (turn_on_prior) {
+            double max_dist_sample = sqrt(Node::SquareDistance(sample, init_node))
+            + sqrt(Node::SquareDistance(sample, environment->Goal()));
+            if (shortest_path_length_!=0 && max_dist_sample > shortest_path_length_) {
+                *is_success = false;
+                return;
+            }
+        }
+
+        // Find parent node.
+        Node nearest_node;
+        if (!GetNearestNode(sample, *gnat, tree, &nearest_node)) {
+            *is_success = false;
+            return;
+        }
+
+        // Steer.
+        if (! Steer(sample, nearest_node, new_node)) {
+            *is_success = false;
+            return;
+        }
+
+        // Check collision.
+        if (CheckCollision(nearest_node, *new_node, *environment)) {
+            // Collide.
+            *is_success = false;
+            return;
+        }
+
+        // Add to tree.
+
+        new_node->SetParent(nearest_node.index());
+        *is_success = true;
+    }
+
     Node HeuristicRRT::UniformSample(const Environment* environment) {
         // srand(time(0));
         int rand_row = int((double) rand() / RAND_MAX * 511);

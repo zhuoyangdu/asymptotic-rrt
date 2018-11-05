@@ -1,6 +1,7 @@
 use_sim_time : true
+multiple_thread: true
 rrt_conf {
-    show_image : false
+    show_image : true
     time_step : 0.5
     k_voronoi : 1.0
     k_goal : 5.0
@@ -9,7 +10,7 @@ rrt_conf {
     turn_on_prior: true
     k_repulsive: 0.4
     post_iteration: 200
-    record: true
+    record: false
     record_path: "/home/zy/du/origin_data/1025"
     uniform_sample: false
     pivots_k: 12

@@ -39,7 +39,18 @@ public:
     PlanningStatus Solve(const VehicleState& vehicle_state,
                          Environment* environment);
 
+    PlanningStatus SolveThread(const VehicleState& vehicle_state,
+                                    Environment* environment);
 private:
+    void Extend(
+        const Node& init_node,
+       const ProbablisticMap& probablistic_map,
+       Environment* environment,
+       const std::vector<Node>& tree,
+       GNAT* gnat,
+       bool* is_success,
+       Node* new_node);
+
     struct Compare {
         Compare(Node sample) {this->sample = sample;}
         bool operator() (Node& a, Node& b) {
